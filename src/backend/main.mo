@@ -17,14 +17,23 @@ actor {
   type Subscriber = { principal : Principal; status : SubscriptionStatus };
   let subscribers = Map.empty<Principal, SubscriptionStatus>();
 
+  // Manual payment records for bKash/Nagad
+  type ManualPaymentRecord = {
+    principal : Principal;
+    transactionId : Text;
+    method : Text;
+    timestamp : Int;
+    verified : Bool;
+  };
+  let manualPayments = Map.empty<Principal, ManualPaymentRecord>();
+
   public type UserProfile = {
     name : Text;
-    language : Text; // Bengali preference
+    language : Text;
   };
 
   let userProfiles = Map.empty<Principal, UserProfile>();
 
-  // Stripe configuration (should be set by admin)
   var stripeConfig : ?Stripe.StripeConfiguration = null;
 
   func requireAndGetStripeConfig() : Stripe.StripeConfiguration {
@@ -83,20 +92,42 @@ actor {
     subscribers.entries().toArray().map(func((p, s)) { { principal = p; status = s } });
   };
 
-  // Webhook handler - should be called by Stripe webhook or admin after payment verification
+  // Submit manual payment (bKash/Nagad) - grants subscription immediately, admin can revoke if fraudulent
+  public shared ({ caller }) func submitManualPayment(transactionId : Text, method : Text) : async Bool {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only logged-in users can submit payments");
+    };
+    if (transactionId.size() < 4) {
+      Runtime.trap("Invalid transaction ID");
+    };
+    manualPayments.add(caller, {
+      principal = caller;
+      transactionId = transactionId;
+      method = method;
+      timestamp = 0;
+      verified = false;
+    });
+    subscribers.add(caller, #active);
+    true;
+  };
+
+  // Admin: get all manual payment records for verification
+  public query ({ caller }) func getManualPayments() : async [ManualPaymentRecord] {
+    if (not (AccessControl.isAdmin(accessControlState, caller))) {
+      Runtime.trap("[SUBSCRIBE] Unauthorized: Only admins can view payment records!");
+    };
+    manualPayments.entries().toArray().map(func((_, r)) { r });
+  };
+
+  // Called by admin after Stripe payment verification
   public shared ({ caller }) func activateSubscription(userPrincipal : Principal, paymentSessionId : Text) : async Bool {
-    // Only admin or the system can activate subscriptions after payment verification
     if (not (AccessControl.isAdmin(accessControlState, caller))) {
       Runtime.trap("[SUBSCRIBE] activateSubscription Unauthorized: Only admins can activate subscriptions!");
     };
-
-    // Verify payment status with Stripe
     let config = requireAndGetStripeConfig();
     let status = await Stripe.getSessionStatus(config, paymentSessionId, transform);
-
     switch (status) {
-      case (#completed { response; userPrincipal = verifiedPrincipal }) {
-        // Activate the subscription for the verified user
+      case (#completed { response = _; userPrincipal = _verifiedPrincipal }) {
         subscribers.add(userPrincipal, #active);
         true;
       };
@@ -106,7 +137,6 @@ actor {
     };
   };
 
-  // User profile management
   public query ({ caller }) func getCallerUserProfile() : async ?UserProfile {
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
       Runtime.trap("Unauthorized: Only users can access profiles");
@@ -128,8 +158,7 @@ actor {
     userProfiles.add(caller, profile);
   };
 
-  // Calculator access - requires active subscription
-  public query ({ caller }) func accessCalculator(calculatorType : Text) : async Bool {
+  public query ({ caller }) func accessCalculator(_calculatorType : Text) : async Bool {
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
       Runtime.trap("Unauthorized: Only logged-in users can access calculators");
     };
@@ -137,17 +166,14 @@ actor {
     true;
   };
 
-  // Example calculator function - requires active subscription
-  public query ({ caller }) func calculateCropYield(area : Float, cropType : Text) : async Float {
+  public query ({ caller }) func calculateCropYield(area : Float, _cropType : Text) : async Float {
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
       Runtime.trap("Unauthorized: Only logged-in users can use calculators");
     };
     requireActiveSubscription(caller);
-    // Placeholder calculation logic
     area * 2.5;
   };
 
-  // Admin function to manually deactivate subscription
   public shared ({ caller }) func deactivateSubscription(userPrincipal : Principal) : async () {
     if (not (AccessControl.isAdmin(accessControlState, caller))) {
       Runtime.trap("[SUBSCRIBE] deactivateSubscription Unauthorized: Only admins can deactivate subscriptions!");

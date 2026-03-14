@@ -56,3 +56,24 @@ export function useCreateCheckoutSession() {
     },
   });
 }
+
+export function useSubmitManualPayment() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      transactionId,
+      method,
+    }: {
+      transactionId: string;
+      method: string;
+    }) => {
+      if (!actor) throw new Error("Actor not ready");
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      return (actor as any).submitManualPayment(transactionId, method);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["isSubscribed"] });
+    },
+  });
+}
