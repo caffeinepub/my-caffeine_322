@@ -1,0 +1,121 @@
+@import url("https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@300;400;500;600;700&display=swap");
+
+@font-face {
+  font-family: "Fraunces";
+  src: url("/assets/fonts/Fraunces.woff2") format("woff2");
+  font-weight: 300 900;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Figtree";
+  src: url("/assets/fonts/Figtree.woff2") format("woff2");
+  font-weight: 300 900;
+  font-display: swap;
+}
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Rich green agricultural palette */
+    --background: 0.97 0.012 120;
+    --foreground: 0.18 0.04 130;
+
+    --card: 1 0 0;
+    --card-foreground: 0.18 0.04 130;
+
+    --popover: 1 0 0;
+    --popover-foreground: 0.18 0.04 130;
+
+    --primary: 0.44 0.14 145;
+    --primary-foreground: 0.98 0 0;
+
+    --secondary: 0.92 0.04 120;
+    --secondary-foreground: 0.22 0.05 130;
+
+    --muted: 0.94 0.02 120;
+    --muted-foreground: 0.5 0.04 130;
+
+    --accent: 0.78 0.17 80;
+    --accent-foreground: 0.18 0.06 80;
+
+    --destructive: 0.55 0.22 25;
+    --destructive-foreground: 0.98 0 0;
+
+    --border: 0.88 0.04 130;
+    --input: 0.88 0.04 130;
+    --ring: 0.44 0.14 145;
+
+    --radius: 0.75rem;
+
+    --chart-1: 0.44 0.14 145;
+    --chart-2: 0.62 0.16 145;
+    --chart-3: 0.78 0.17 80;
+    --chart-4: 0.55 0.22 25;
+    --chart-5: 0.38 0.1 130;
+
+    --sidebar: 0.95 0.03 120;
+    --sidebar-foreground: 0.18 0.04 130;
+    --sidebar-primary: 0.44 0.14 145;
+    --sidebar-primary-foreground: 0.98 0 0;
+    --sidebar-accent: 0.92 0.04 120;
+    --sidebar-accent-foreground: 0.22 0.05 130;
+    --sidebar-border: 0.88 0.04 130;
+    --sidebar-ring: 0.44 0.14 145;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-family: "Hind Siliguri", "Figtree", sans-serif;
+  }
+}
+
+.result-profit {
+  background: oklch(0.94 0.07 145);
+  border-color: oklch(0.44 0.14 145);
+  color: oklch(0.28 0.1 145);
+}
+
+.result-loss {
+  background: oklch(0.95 0.05 25);
+  border-color: oklch(0.55 0.22 25);
+  color: oklch(0.35 0.15 25);
+}
+
+.result-neutral {
+  background: oklch(0.94 0.04 80);
+  border-color: oklch(0.72 0.12 80);
+  color: oklch(0.38 0.1 80);
+}
+
+.result-default {
+  background: oklch(0.94 0.02 120);
+  border-color: oklch(0.82 0.06 130);
+  color: oklch(0.45 0.06 130);
+}
+
+.field-pattern {
+  background-image: radial-gradient(
+      circle at 20% 80%,
+      oklch(0.62 0.14 145 / 0.15) 0%,
+      transparent 50%
+    ),
+    radial-gradient(
+      circle at 80% 20%,
+      oklch(0.72 0.12 150 / 0.12) 0%,
+      transparent 50%
+    ),
+    radial-gradient(
+      circle at 50% 50%,
+      oklch(0.78 0.17 80 / 0.06) 0%,
+      transparent 70%
+    );
+}
