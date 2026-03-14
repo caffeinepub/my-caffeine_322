@@ -1,16 +1,70 @@
+import { SubscriptionModal } from "@/components/SubscriptionModal";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { Toaster } from "@/components/ui/sonner";
+import { useInternetIdentity } from "@/hooks/useInternetIdentity";
+import { useCheckStripeSession, useIsSubscribed } from "@/hooks/useQueries";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   ArrowLeft,
   Calculator,
+  CheckCircle2,
+  Download,
+  LogIn,
+  LogOut,
   Minus,
   RotateCcw,
   TrendingDown,
   TrendingUp,
+  User,
+  X,
 } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { toast } from "sonner";
+
+// PWA install prompt hook
+function useInstallPrompt() {
+  const [prompt, setPrompt] = useState<Event | null>(null);
+  const [installed, setInstalled] = useState(false);
+
+  useEffect(() => {
+    const handler = (e: Event) => {
+      e.preventDefault();
+      setPrompt(e);
+    };
+    window.addEventListener("beforeinstallprompt", handler);
+    window.addEventListener("appinstalled", () => setInstalled(true));
+    return () => window.removeEventListener("beforeinstallprompt", handler);
+  }, []);
+
+  const install = async () => {
+    if (!prompt) return;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (prompt as any).prompt();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const result = await (prompt as any).userChoice;
+    if (result.outcome === "accepted") setInstalled(true);
+    setPrompt(null);
+  };
+
+  return { canInstall: !!prompt && !installed, install, installed };
+}
+
+// Parse session_id from URL
+function useSessionId() {
+  return useMemo(() => {
+    const params = new URLSearchParams(window.location.search);
+    return params.get("session_id");
+  }, []);
+}
 
 type SubSector = {
   id: string;
@@ -207,6 +261,48 @@ type CalcState = {
   result: CalcResult | null;
 };
 
+function InstallBanner() {
+  const { canInstall, install } = useInstallPrompt();
+  const [dismissed, setDismissed] = useState(false);
+
+  if (!canInstall || dismissed) return null;
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: -20 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -20 }}
+      className="bg-green-600 text-white px-4 py-3 flex items-center justify-between gap-3"
+    >
+      <div className="flex items-center gap-2 flex-1 min-w-0">
+        <Download className="w-4 h-4 shrink-0" />
+        <span className="text-sm font-medium">
+          অ্যাপটি মোবাইলে ইনস্টল করুন — ইন্টারনেট ছাড়াও চলবে
+        </span>
+      </div>
+      <div className="flex items-center gap-2 shrink-0">
+        <button
+          type="button"
+          data-ocid="install.primary_button"
+          onClick={install}
+          className="bg-white text-green-700 text-xs font-bold px-3 py-1.5 rounded-lg hover:bg-green-50 transition-colors"
+        >
+          ইনস্টল করুন
+        </button>
+        <button
+          type="button"
+          data-ocid="install.close_button"
+          onClick={() => setDismissed(true)}
+          className="text-white/80 hover:text-white transition-colors"
+          aria-label="বন্ধ করুন"
+        >
+          <X className="w-4 h-4" />
+        </button>
+      </div>
+    </motion.div>
+  );
+}
+
 function CalculatorPanel(props: {
   state: CalcState;
   onChange: (s: CalcState) => void;
@@ -372,7 +468,56 @@ function CalculatorPanel(props: {
   );
 }
 
+// Auth header button
+function AuthHeaderButton() {
+  const { identity, login, clear, isLoggingIn, isInitializing } =
+    useInternetIdentity();
+  const isAuthenticated = !!identity && !identity.getPrincipal().isAnonymous();
+
+  if (isInitializing) return null;
+
+  if (isAuthenticated) {
+    const principal = identity.getPrincipal().toString();
+    const shortPrincipal = `${principal.slice(0, 5)}...${principal.slice(-3)}`;
+    return (
+      <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5 bg-green-50 border border-green-200 rounded-xl px-2.5 py-1.5">
+          <User className="w-3.5 h-3.5 text-green-700" />
+          <span className="text-xs font-medium text-green-800">
+            {shortPrincipal}
+          </span>
+        </div>
+        <button
+          type="button"
+          data-ocid="header.logout_button"
+          onClick={clear}
+          className="p-1.5 rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+          aria-label="লগআউট"
+          title="লগআউট"
+        >
+          <LogOut className="w-4 h-4" />
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <button
+      type="button"
+      data-ocid="header.login_button"
+      onClick={login}
+      disabled={isLoggingIn}
+      className="flex items-center gap-1.5 bg-green-600 text-white text-xs font-semibold px-3 py-2 rounded-xl hover:bg-green-700 transition-colors disabled:opacity-60 shrink-0"
+    >
+      <LogIn className="w-3.5 h-3.5" />
+      {isLoggingIn ? "লগইন..." : "লগইন"}
+    </button>
+  );
+}
+
 function HomePage({ onSelect }: { onSelect: (s: SubSector) => void }) {
+  const { canInstall, install } = useInstallPrompt();
+
   const containerVariants = {
     hidden: {},
     visible: { transition: { staggerChildren: 0.07 } },
@@ -390,15 +535,35 @@ function HomePage({ onSelect }: { onSelect: (s: SubSector) => void }) {
     <div className="min-h-screen field-pattern">
       <header className="bg-white/80 backdrop-blur-sm sticky top-0 z-10 border-b border-border shadow-xs">
         <div className="max-w-2xl mx-auto px-4 py-4">
-          <div className="flex items-center gap-3">
-            <div className="text-4xl">🌾</div>
-            <div>
-              <h1 className="text-xl font-bold text-primary leading-tight">
-                বাংলাদেশের কৃষি
-              </h1>
-              <p className="text-xs text-muted-foreground">
-                কৃষি উপখাত ভিত্তিক তথ্য ও হিসাব
-              </p>
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <img
+                src="/assets/generated/krishi-logo-transparent.dim_200x200.png"
+                alt="বাংলাদেশের কৃষি লোগো"
+                className="w-12 h-12 object-contain"
+              />
+              <div>
+                <h1 className="text-xl font-bold text-primary leading-tight">
+                  বাংলাদেশের কৃষি
+                </h1>
+                <p className="text-xs text-muted-foreground">
+                  কৃষি উপখাত ভিত্তিক তথ্য ও হিসাব
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              {canInstall && (
+                <button
+                  type="button"
+                  data-ocid="header.install.primary_button"
+                  onClick={install}
+                  className="flex items-center gap-1.5 bg-green-600 text-white text-xs font-semibold px-3 py-2 rounded-xl hover:bg-green-700 transition-colors shrink-0"
+                >
+                  <Download className="w-3.5 h-3.5" />
+                  ইনস্টল
+                </button>
+              )}
+              <AuthHeaderButton />
             </div>
           </div>
         </div>
@@ -465,17 +630,82 @@ function HomePage({ onSelect }: { onSelect: (s: SubSector) => void }) {
   );
 }
 
+function LoginPromptDialog({
+  open,
+  onClose,
+}: {
+  open: boolean;
+  onClose: () => void;
+}) {
+  const { login, isLoggingIn } = useInternetIdentity();
+  return (
+    <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
+      <DialogContent data-ocid="login.dialog" className="max-w-xs text-center">
+        <DialogHeader>
+          <div className="flex justify-center mb-3">
+            <div className="w-14 h-14 bg-green-100 rounded-2xl flex items-center justify-center">
+              <LogIn className="w-7 h-7 text-green-700" />
+            </div>
+          </div>
+          <DialogTitle className="text-lg">লগইন করুন</DialogTitle>
+          <p className="text-sm text-muted-foreground mt-1">
+            হিসাব করতে প্রথমে লগইন করুন
+          </p>
+        </DialogHeader>
+        <div className="flex flex-col gap-3 mt-2">
+          <Button
+            data-ocid="login.primary_button"
+            onClick={login}
+            disabled={isLoggingIn}
+            className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold"
+          >
+            {isLoggingIn ? (
+              <>
+                <span className="animate-pulse">লগইন হচ্ছে...</span>
+              </>
+            ) : (
+              "ইন্টারনেট আইডি দিয়ে লগইন"
+            )}
+          </Button>
+          <button
+            type="button"
+            data-ocid="login.cancel_button"
+            onClick={onClose}
+            className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+          >
+            পরে করব
+          </button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 function SubSectorPage({
   sector,
   onBack,
 }: { sector: SubSector; onBack: () => void }) {
+  const { identity } = useInternetIdentity();
+  const isAuthenticated = !!identity && !identity.getPrincipal().isAnonymous();
+  const { data: isSubscribed, isLoading: subLoading } = useIsSubscribed();
+
   const [expandedIdx, setExpandedIdx] = useState<number | null>(null);
   const [calcStates, setCalcStates] = useState<Record<number, CalcState>>({});
+  const [showLoginDialog, setShowLoginDialog] = useState(false);
+  const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
 
   const getCalcState = (idx: number): CalcState =>
     calcStates[idx] ?? { investment: "", sales: "", result: null };
 
   const handleExpand = (idx: number) => {
+    if (!isAuthenticated) {
+      setShowLoginDialog(true);
+      return;
+    }
+    if (!isSubscribed && !subLoading) {
+      setShowSubscriptionModal(true);
+      return;
+    }
     setExpandedIdx((prev) => (prev === idx ? null : idx));
   };
 
@@ -512,8 +742,13 @@ function SubSectorPage({
             >
               <ArrowLeft className="w-5 h-5" />
             </button>
+            <img
+              src="/assets/generated/krishi-logo-transparent.dim_200x200.png"
+              alt="লোগো"
+              className="w-9 h-9 object-contain"
+            />
             <div className="text-3xl">{sector.icon}</div>
-            <div>
+            <div className="flex-1">
               <h1 className={`text-lg font-bold ${sector.textClass}`}>
                 {sector.name}
               </h1>
@@ -521,9 +756,34 @@ function SubSectorPage({
                 {sector.description}
               </p>
             </div>
+            <AuthHeaderButton />
           </div>
         </div>
       </header>
+
+      {/* Subscription status badge */}
+      {isAuthenticated && !subLoading && !isSubscribed && (
+        <div className="max-w-2xl mx-auto px-4 pt-3">
+          <button
+            type="button"
+            data-ocid="subscription.open_modal_button"
+            onClick={() => setShowSubscriptionModal(true)}
+            className="w-full flex items-center justify-between bg-amber-50 border border-amber-200 rounded-xl px-4 py-2.5 text-sm text-amber-800 hover:bg-amber-100 transition-colors"
+          >
+            <span>প্রিমিয়াম সদস্যতা নিন — সব ক্যালকুলেটর ব্যবহার করুন</span>
+            <span className="font-bold text-amber-700 shrink-0">৳৫০/মাস →</span>
+          </button>
+        </div>
+      )}
+
+      {isAuthenticated && isSubscribed && (
+        <div className="max-w-2xl mx-auto px-4 pt-3">
+          <div className="flex items-center gap-2 bg-green-50 border border-green-200 rounded-xl px-4 py-2 text-sm text-green-800">
+            <CheckCircle2 className="w-4 h-4 text-green-600 shrink-0" />
+            <span>সক্রিয় সদস্যতা — সকল হিসাব উপলব্ধ</span>
+          </div>
+        </div>
+      )}
 
       <main className="max-w-2xl mx-auto px-4 py-5">
         <div className="flex items-center justify-between mb-4">
@@ -589,39 +849,80 @@ function SubSectorPage({
           ))}
         </motion.div>
       </main>
+
+      <LoginPromptDialog
+        open={showLoginDialog}
+        onClose={() => setShowLoginDialog(false)}
+      />
+      <SubscriptionModal
+        open={showSubscriptionModal}
+        onClose={() => setShowSubscriptionModal(false)}
+      />
     </div>
   );
+}
+
+// Handle Stripe payment return
+function PaymentReturnHandler() {
+  const sessionId = useSessionId();
+  const { data: sessionStatus } = useCheckStripeSession(sessionId);
+  const queryClient = useQueryClient();
+  const [handled, setHandled] = useState(false);
+
+  useEffect(() => {
+    if (!sessionStatus || handled) return;
+    setHandled(true);
+    if (sessionStatus.__kind__ === "completed") {
+      toast.success("সাবস্ক্রিপশন সফল! আপনি এখন সকল হিসাব ব্যবহার করতে পারবেন।", {
+        duration: 6000,
+      });
+      queryClient.invalidateQueries({ queryKey: ["isSubscribed"] });
+      // Clean URL
+      const url = new URL(window.location.href);
+      url.searchParams.delete("session_id");
+      window.history.replaceState({}, "", url.toString());
+    } else if (sessionStatus.__kind__ === "failed") {
+      toast.error("পেমেন্ট সম্পন্ন হয়নি। আবার চেষ্টা করুন।");
+    }
+  }, [sessionStatus, handled, queryClient]);
+
+  return null;
 }
 
 export default function App() {
   const [selectedSector, setSelectedSector] = useState<SubSector | null>(null);
 
   return (
-    <AnimatePresence mode="wait">
-      {!selectedSector ? (
-        <motion.div
-          key="home"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0, x: -30 }}
-          transition={{ duration: 0.2 }}
-        >
-          <HomePage onSelect={(s) => setSelectedSector(s)} />
-        </motion.div>
-      ) : (
-        <motion.div
-          key={selectedSector.id}
-          initial={{ opacity: 0, x: 30 }}
-          animate={{ opacity: 1, x: 0 }}
-          exit={{ opacity: 0, x: 30 }}
-          transition={{ duration: 0.2 }}
-        >
-          <SubSectorPage
-            sector={selectedSector}
-            onBack={() => setSelectedSector(null)}
-          />
-        </motion.div>
-      )}
-    </AnimatePresence>
+    <>
+      <Toaster richColors position="top-center" />
+      <PaymentReturnHandler />
+      <InstallBanner />
+      <AnimatePresence mode="wait">
+        {!selectedSector ? (
+          <motion.div
+            key="home"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0, x: -30 }}
+            transition={{ duration: 0.2 }}
+          >
+            <HomePage onSelect={(s) => setSelectedSector(s)} />
+          </motion.div>
+        ) : (
+          <motion.div
+            key={selectedSector.id}
+            initial={{ opacity: 0, x: 30 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: 30 }}
+            transition={{ duration: 0.2 }}
+          >
+            <SubSectorPage
+              sector={selectedSector}
+              onBack={() => setSelectedSector(null)}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </>
   );
 }
