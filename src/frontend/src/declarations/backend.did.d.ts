@@ -10,6 +10,23 @@ import type { ActorMethod } from '@icp-sdk/core/agent';
 import type { IDL } from '@icp-sdk/core/candid';
 import type { Principal } from '@icp-sdk/core/principal';
 
+export interface CalcRecord {
+  'id' : bigint,
+  'item' : string,
+  'difference' : number,
+  'investment' : number,
+  'sector' : string,
+  'sales' : number,
+  'timestamp' : bigint,
+  'resultType' : string,
+}
+export interface ManualPaymentRecord {
+  'method' : string,
+  'principal' : Principal,
+  'verified' : boolean,
+  'timestamp' : bigint,
+  'transactionId' : string,
+}
 export interface ShoppingItem {
   'productName' : string,
   'currency' : string,
@@ -44,6 +61,12 @@ export interface UserProfile { 'name' : string, 'language' : string }
 export type UserRole = { 'admin' : null } |
   { 'user' : null } |
   { 'guest' : null };
+export interface YearlySummary {
+  'totalInvestment' : number,
+  'totalLoss' : number,
+  'totalProfit' : number,
+  'totalSales' : number,
+}
 export interface http_header { 'value' : string, 'name' : string }
 export interface http_request_result {
   'status' : bigint,
@@ -61,16 +84,25 @@ export interface _SERVICE {
     string
   >,
   'deactivateSubscription' : ActorMethod<[Principal], undefined>,
+  'deleteCalcRecord' : ActorMethod<[bigint], undefined>,
   'getAllSubscribers' : ActorMethod<[], Array<Subscriber>>,
+  'getCalcHistory' : ActorMethod<[], Array<CalcRecord>>,
   'getCallerUserProfile' : ActorMethod<[], [] | [UserProfile]>,
   'getCallerUserRole' : ActorMethod<[], UserRole>,
+  'getManualPayments' : ActorMethod<[], Array<ManualPaymentRecord>>,
   'getStripeSessionStatus' : ActorMethod<[string], StripeSessionStatus>,
   'getUserProfile' : ActorMethod<[Principal], [] | [UserProfile]>,
+  'getYearlySummary' : ActorMethod<[], YearlySummary>,
   'isCallerAdmin' : ActorMethod<[], boolean>,
   'isCallerSubscribed' : ActorMethod<[], boolean>,
   'isStripeConfigured' : ActorMethod<[], boolean>,
+  'saveCalcRecord' : ActorMethod<
+    [string, string, number, number, number, string],
+    bigint
+  >,
   'saveCallerUserProfile' : ActorMethod<[UserProfile], undefined>,
   'setStripeConfiguration' : ActorMethod<[StripeConfiguration], undefined>,
+  'submitManualPayment' : ActorMethod<[string, string], boolean>,
   'transform' : ActorMethod<[TransformationInput], TransformationOutput>,
 }
 export declare const idlService: IDL.ServiceClass;

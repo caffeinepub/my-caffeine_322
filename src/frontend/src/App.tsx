@@ -1,3 +1,5 @@
+import { AdminPanel } from "@/components/AdminPanel";
+import { HistoryPage } from "@/components/HistoryPage";
 import { SubscriptionModal } from "@/components/SubscriptionModal";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -10,23 +12,34 @@ import {
 import { Input } from "@/components/ui/input";
 import { Toaster } from "@/components/ui/sonner";
 import { useInternetIdentity } from "@/hooks/useInternetIdentity";
-import { useCheckStripeSession, useIsSubscribed } from "@/hooks/useQueries";
+import {
+  useCheckStripeSession,
+  useGovPrices,
+  useIsAdmin,
+  useIsSubscribed,
+  useSaveCalcRecord,
+} from "@/hooks/useQueries";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   ArrowLeft,
   Calculator,
   CheckCircle2,
+  Clock,
   Download,
   LogIn,
   LogOut,
   Minus,
+  QrCode,
   RotateCcw,
+  Save,
+  Settings,
   TrendingDown,
   TrendingUp,
   User,
   X,
 } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
+
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
@@ -66,6 +79,13 @@ function useSessionId() {
   }, []);
 }
 
+type ItemData = {
+  name: string;
+  govPrice: number;
+  govUnit: string;
+  govQty: number;
+};
+
 type SubSector = {
   id: string;
   name: string;
@@ -76,7 +96,7 @@ type SubSector = {
   textClass: string;
   badgeClass: string;
   description: string;
-  items: string[];
+  items: ItemData[];
 };
 
 const subSectors: SubSector[] = [
@@ -91,16 +111,16 @@ const subSectors: SubSector[] = [
     badgeClass: "bg-green-100 text-green-800",
     description: "ধান, গম, পাট ও অন্যান্য ফসল",
     items: [
-      "ধান (আউশ)",
-      "ধান (আমন)",
-      "ধান (বোরো)",
-      "গম",
-      "পাট",
-      "ভুট্টা",
-      "আলু",
-      "সরিষা",
-      "মসুর ডাল",
-      "ছোলা",
+      { name: "ধান (আউশ)", govPrice: 28, govUnit: "কেজি", govQty: 1 },
+      { name: "ধান (আমন)", govPrice: 28, govUnit: "কেজি", govQty: 1 },
+      { name: "ধান (বোরো)", govPrice: 30, govUnit: "কেজি", govQty: 1 },
+      { name: "গম", govPrice: 35, govUnit: "কেজি", govQty: 1 },
+      { name: "পাট", govPrice: 3500, govUnit: "মণ (৪০ কেজি)", govQty: 1 },
+      { name: "ভুট্টা", govPrice: 30, govUnit: "কেজি", govQty: 1 },
+      { name: "আলু", govPrice: 30, govUnit: "কেজি", govQty: 1 },
+      { name: "সরিষা", govPrice: 70, govUnit: "কেজি", govQty: 1 },
+      { name: "মসুর ডাল", govPrice: 85, govUnit: "কেজি", govQty: 1 },
+      { name: "ছোলা", govPrice: 80, govUnit: "কেজি", govQty: 1 },
     ],
   },
   {
@@ -114,18 +134,18 @@ const subSectors: SubSector[] = [
     badgeClass: "bg-emerald-100 text-emerald-800",
     description: "শাকসবজি, ফলমূল ও মসলা",
     items: [
-      "টমেটো",
-      "বেগুন",
-      "লাউ",
-      "কুমড়া",
-      "শিম",
-      "আম",
-      "কলা",
-      "পেঁপে",
-      "কাঁঠাল",
-      "পেঁয়াজ",
-      "রসুন",
-      "আদা",
+      { name: "টমেটো", govPrice: 40, govUnit: "কেজি", govQty: 1 },
+      { name: "বেগুন", govPrice: 40, govUnit: "কেজি", govQty: 1 },
+      { name: "লাউ", govPrice: 35, govUnit: "কেজি", govQty: 1 },
+      { name: "কুমড়া", govPrice: 35, govUnit: "কেজি", govQty: 1 },
+      { name: "শিম", govPrice: 60, govUnit: "কেজি", govQty: 1 },
+      { name: "আম", govPrice: 80, govUnit: "কেজি", govQty: 1 },
+      { name: "কলা", govPrice: 40, govUnit: "ডজন", govQty: 1 },
+      { name: "পেঁপে", govPrice: 35, govUnit: "কেজি", govQty: 1 },
+      { name: "কাঁঠাল", govPrice: 50, govUnit: "কেজি", govQty: 1 },
+      { name: "পেঁয়াজ", govPrice: 65, govUnit: "কেজি", govQty: 1 },
+      { name: "রসুন", govPrice: 150, govUnit: "কেজি", govQty: 1 },
+      { name: "আদা", govPrice: 200, govUnit: "কেজি", govQty: 1 },
     ],
   },
   {
@@ -139,15 +159,15 @@ const subSectors: SubSector[] = [
     badgeClass: "bg-blue-100 text-blue-800",
     description: "মাছ চাষ ও মৎস্য আহরণ",
     items: [
-      "রুই মাছ",
-      "কাতলা মাছ",
-      "তেলাপিয়া",
-      "পাঙ্গাস",
-      "চিংড়ি (গলদা)",
-      "চিংড়ি (বাগদা)",
-      "কই মাছ",
-      "শিং মাছ",
-      "মাগুর মাছ",
+      { name: "রুই মাছ", govPrice: 300, govUnit: "কেজি", govQty: 1 },
+      { name: "কাতলা মাছ", govPrice: 300, govUnit: "কেজি", govQty: 1 },
+      { name: "তেলাপিয়া", govPrice: 220, govUnit: "কেজি", govQty: 1 },
+      { name: "পাঙ্গাস", govPrice: 220, govUnit: "কেজি", govQty: 1 },
+      { name: "চিংড়ি (গলদা)", govPrice: 800, govUnit: "কেজি", govQty: 1 },
+      { name: "চিংড়ি (বাগদা)", govPrice: 600, govUnit: "কেজি", govQty: 1 },
+      { name: "কই মাছ", govPrice: 350, govUnit: "কেজি", govQty: 1 },
+      { name: "শিং মাছ", govPrice: 450, govUnit: "কেজি", govQty: 1 },
+      { name: "মাগুর মাছ", govPrice: 500, govUnit: "কেজি", govQty: 1 },
     ],
   },
   {
@@ -161,15 +181,15 @@ const subSectors: SubSector[] = [
     badgeClass: "bg-amber-100 text-amber-800",
     description: "গরু, ছাগল, মুরগি ও হাঁস পালন",
     items: [
-      "দেশি গরু",
-      "শংকর গরু",
-      "ছাগল",
-      "ভেড়া",
-      "দেশি মুরগি",
-      "ব্রয়লার মুরগি",
-      "লেয়ার মুরগি",
-      "হাঁস",
-      "কোয়েল পাখি",
+      { name: "দেশি গরু", govPrice: 450, govUnit: "কেজি", govQty: 1 },
+      { name: "শংকর গরু", govPrice: 500, govUnit: "কেজি", govQty: 1 },
+      { name: "ছাগল", govPrice: 600, govUnit: "কেজি", govQty: 1 },
+      { name: "ভেড়া", govPrice: 550, govUnit: "কেজি", govQty: 1 },
+      { name: "দেশি মুরগি", govPrice: 450, govUnit: "কেজি", govQty: 1 },
+      { name: "ব্রয়লার মুরগি", govPrice: 190, govUnit: "কেজি", govQty: 1 },
+      { name: "লেয়ার মুরগি", govPrice: 300, govUnit: "কেজি", govQty: 1 },
+      { name: "হাঁস", govPrice: 350, govUnit: "কেজি", govQty: 1 },
+      { name: "কোয়েল পাখি", govPrice: 300, govUnit: "কেজি", govQty: 1 },
     ],
   },
   {
@@ -183,13 +203,13 @@ const subSectors: SubSector[] = [
     badgeClass: "bg-teal-100 text-teal-800",
     description: "চা, ফুল ও ফল বাগান",
     items: [
-      "চা (সিলেট)",
-      "চা (পঞ্চগড়)",
-      "ফুল চাষ",
-      "গোলাপ",
-      "রজনীগন্ধা",
-      "লেবু বাগান",
-      "লিচু বাগান",
+      { name: "চা (সিলেট)", govPrice: 300, govUnit: "কেজি", govQty: 1 },
+      { name: "চা (পঞ্চগড়)", govPrice: 280, govUnit: "কেজি", govQty: 1 },
+      { name: "ফুল চাষ", govPrice: 30, govUnit: "কেজি", govQty: 1 },
+      { name: "গোলাপ", govPrice: 30, govUnit: "পিস", govQty: 1 },
+      { name: "রজনীগন্ধা", govPrice: 20, govUnit: "পিস", govQty: 1 },
+      { name: "লেবু বাগান", govPrice: 60, govUnit: "কেজি", govQty: 1 },
+      { name: "লিচু বাগান", govPrice: 150, govUnit: "কেজি", govQty: 1 },
     ],
   },
   {
@@ -202,7 +222,15 @@ const subSectors: SubSector[] = [
     textClass: "text-lime-800",
     badgeClass: "bg-lime-100 text-lime-800",
     description: "সুন্দরবন, সামাজিক বন ও বাগান",
-    items: ["সুন্দরবন", "গোলপাতা", "শাল বন", "সামাজিক বনায়ন", "বাঁশ", "বেত", "ঔষধি গাছ"],
+    items: [
+      { name: "সুন্দরবন", govPrice: 50, govUnit: "কেজি", govQty: 1 },
+      { name: "গোলপাতা", govPrice: 5, govUnit: "পিস", govQty: 1 },
+      { name: "শাল বন", govPrice: 80, govUnit: "কেজি", govQty: 1 },
+      { name: "সামাজিক বনায়ন", govPrice: 60, govUnit: "কেজি", govQty: 1 },
+      { name: "বাঁশ", govPrice: 100, govUnit: "পিস", govQty: 1 },
+      { name: "বেত", govPrice: 50, govUnit: "পিস", govQty: 1 },
+      { name: "ঔষধি গাছ", govPrice: 200, govUnit: "কেজি", govQty: 1 },
+    ],
   },
   {
     id: "inputs",
@@ -215,15 +243,15 @@ const subSectors: SubSector[] = [
     badgeClass: "bg-orange-100 text-orange-800",
     description: "সার, বীজ, কীটনাশক ও সেচ",
     items: [
-      "ইউরিয়া সার",
-      "টিএসপি সার",
-      "এমওপি সার",
-      "জৈব সার",
-      "হাইব্রিড বীজ",
-      "দেশি বীজ",
-      "কীটনাশক",
-      "ছত্রাকনাশক",
-      "সেচ ব্যবস্থাপনা",
+      { name: "ইউরিয়া সার", govPrice: 22, govUnit: "কেজি", govQty: 1 },
+      { name: "টিএসপি সার", govPrice: 27, govUnit: "কেজি", govQty: 1 },
+      { name: "এমওপি সার", govPrice: 15, govUnit: "কেজি", govQty: 1 },
+      { name: "জৈব সার", govPrice: 8, govUnit: "কেজি", govQty: 1 },
+      { name: "হাইব্রিড বীজ", govPrice: 500, govUnit: "কেজি", govQty: 1 },
+      { name: "দেশি বীজ", govPrice: 200, govUnit: "কেজি", govQty: 1 },
+      { name: "কীটনাশক", govPrice: 300, govUnit: "লিটার", govQty: 1 },
+      { name: "ছত্রাকনাশক", govPrice: 250, govUnit: "লিটার", govQty: 1 },
+      { name: "সেচ ব্যবস্থাপনা", govPrice: 500, govUnit: "ঘন্টা", govQty: 1 },
     ],
   },
   {
@@ -237,16 +265,18 @@ const subSectors: SubSector[] = [
     badgeClass: "bg-red-100 text-red-800",
     description: "ট্রাক্টর, হার্ভেস্টার ও সরঞ্জাম",
     items: [
-      "পাওয়ার টিলার",
-      "ট্রাক্টর",
-      "কম্বাইন হার্ভেস্টার",
-      "রাইস ট্রান্সপ্লান্টার",
-      "সেচ পাম্প",
-      "থ্রেশার মেশিন",
-      "স্প্রেয়ার মেশিন",
+      { name: "পাওয়ার টিলার", govPrice: 500, govUnit: "ঘন্টা", govQty: 1 },
+      { name: "ট্রাক্টর", govPrice: 800, govUnit: "ঘন্টা", govQty: 1 },
+      { name: "কম্বাইন হার্ভেস্টার", govPrice: 1200, govUnit: "ঘন্টা", govQty: 1 },
+      { name: "রাইস ট্রান্সপ্লান্টার", govPrice: 600, govUnit: "ঘন্টা", govQty: 1 },
+      { name: "সেচ পাম্প", govPrice: 300, govUnit: "ঘন্টা", govQty: 1 },
+      { name: "থ্রেশার মেশিন", govPrice: 400, govUnit: "ঘন্টা", govQty: 1 },
+      { name: "স্প্রেয়ার মেশিন", govPrice: 200, govUnit: "ঘন্টা", govQty: 1 },
     ],
   },
 ];
+
+type GovPriceMap = Record<string, { price: number; unit: string; qty: number }>;
 
 type CalcResult = {
   investment: number;
@@ -307,14 +337,19 @@ function CalculatorPanel(props: {
   state: CalcState;
   onChange: (s: CalcState) => void;
   onClose: () => void;
+  sector: string;
+  item: string;
 }) {
-  const { state, onChange, onClose } = props;
+  const { state, onChange, onClose, sector, item } = props;
+  const { mutate: saveRecord, isPending: isSaving } = useSaveCalcRecord();
+  const [saved, setSaved] = useState(false);
 
   const calculate = () => {
     const inv = Number.parseFloat(state.investment);
     const sal = Number.parseFloat(state.sales);
     if (Number.isNaN(inv) || Number.isNaN(sal)) return;
     const diff = sal - inv;
+    setSaved(false);
     onChange({
       ...state,
       result: {
@@ -324,6 +359,27 @@ function CalculatorPanel(props: {
         type: diff > 0 ? "profit" : diff < 0 ? "loss" : "neutral",
       },
     });
+  };
+
+  const handleSave = () => {
+    if (!state.result) return;
+    saveRecord(
+      {
+        sector,
+        item,
+        investment: state.result.investment,
+        sales: state.result.sales,
+        difference: state.result.difference,
+        resultType: state.result.type,
+      },
+      {
+        onSuccess: () => {
+          toast.success("হিসাব সংরক্ষিত হয়েছে");
+          setSaved(true);
+        },
+        onError: () => toast.error("সংরক্ষণ করতে সমস্যা হয়েছে"),
+      },
+    );
   };
 
   const resultConfig = state.result
@@ -373,13 +429,13 @@ function CalculatorPanel(props: {
         <div className="grid grid-cols-2 gap-3 mb-3">
           <div>
             <label
-              htmlFor="calc-investment"
+              htmlFor={`calc-investment-${item}`}
               className="block text-xs text-muted-foreground mb-1"
             >
               বিনিয়োগ/খরচ (টাকা)
             </label>
             <Input
-              id="calc-investment"
+              id={`calc-investment-${item}`}
               data-ocid="calc.investment_input"
               type="number"
               placeholder="০"
@@ -392,13 +448,13 @@ function CalculatorPanel(props: {
           </div>
           <div>
             <label
-              htmlFor="calc-sales"
+              htmlFor={`calc-sales-${item}`}
               className="block text-xs text-muted-foreground mb-1"
             >
               আয়/বিক্রয় (টাকা)
             </label>
             <Input
-              id="calc-sales"
+              id={`calc-sales-${item}`}
               data-ocid="calc.sales_input"
               type="number"
               placeholder="০"
@@ -460,6 +516,22 @@ function CalculatorPanel(props: {
                   </div>
                 </div>
               </div>
+
+              <Button
+                data-ocid="calc.save_button"
+                size="sm"
+                variant="outline"
+                onClick={handleSave}
+                disabled={isSaving || saved}
+                className="mt-3 w-full h-8 text-xs gap-1.5 border-current"
+              >
+                <Save className="w-3 h-3" />
+                {isSaving
+                  ? "সংরক্ষণ হচ্ছে..."
+                  : saved
+                    ? "✓ সংরক্ষিত"
+                    : "সংরক্ষণ করুন"}
+              </Button>
             </motion.div>
           )}
         </AnimatePresence>
@@ -515,8 +587,62 @@ function AuthHeaderButton() {
   );
 }
 
-function HomePage({ onSelect }: { onSelect: (s: SubSector) => void }) {
+function QRShareDialog({
+  open,
+  onClose,
+}: {
+  open: boolean;
+  onClose: () => void;
+}) {
+  const appUrl = window.location.origin + window.location.pathname;
+
+  return (
+    <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
+      <DialogContent data-ocid="qr.dialog" className="max-w-xs text-center">
+        <DialogHeader>
+          <DialogTitle className="text-lg">অ্যাপ শেয়ার করুন</DialogTitle>
+        </DialogHeader>
+        <div className="flex flex-col items-center gap-4 py-2">
+          <div className="p-3 bg-white rounded-2xl border-2 border-green-100 shadow-sm">
+            <img
+              src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(appUrl)}&color=16a34a`}
+              alt="QR Code"
+              width={200}
+              height={200}
+              className="rounded-lg"
+            />
+          </div>
+          <p className="text-xs text-muted-foreground break-all px-2">
+            {appUrl}
+          </p>
+          <Button
+            data-ocid="qr.close_button"
+            variant="outline"
+            onClick={onClose}
+            className="w-full border-green-200 text-green-800 hover:bg-green-50"
+          >
+            বন্ধ করুন
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function HomePage({
+  onSelect,
+  onHistory,
+  onAdmin,
+  govPricesMap,
+}: {
+  onSelect: (s: SubSector) => void;
+  onHistory: () => void;
+  onAdmin: () => void;
+  govPricesMap: GovPriceMap;
+}) {
   const { canInstall, install } = useInstallPrompt();
+  const [showQR, setShowQR] = useState(false);
+  const { data: isAdmin } = useIsAdmin();
 
   const containerVariants = {
     hidden: {},
@@ -531,6 +657,23 @@ function HomePage({ onSelect }: { onSelect: (s: SubSector) => void }) {
     },
   };
 
+  // Merge govPricesMap into subSectors for display
+  const mergedSectors = subSectors.map((sector) => ({
+    ...sector,
+    items: sector.items.map((item) => {
+      const key = `${sector.id}#${item.name}`;
+      const override = govPricesMap[key];
+      return override
+        ? {
+            ...item,
+            govPrice: override.price,
+            govUnit: override.unit,
+            govQty: override.qty,
+          }
+        : item;
+    }),
+  }));
+
   return (
     <div className="min-h-screen field-pattern">
       <header className="bg-white/80 backdrop-blur-sm sticky top-0 z-10 border-b border-border shadow-xs">
@@ -538,7 +681,7 @@ function HomePage({ onSelect }: { onSelect: (s: SubSector) => void }) {
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-3">
               <img
-                src="/assets/generated/krishi-logo-transparent.dim_200x200.png"
+                src="/assets/generated/agri-logo-transparent.dim_120x120.png"
                 alt="বাংলাদেশের কৃষি লোগো"
                 className="w-12 h-12 object-contain"
               />
@@ -563,6 +706,38 @@ function HomePage({ onSelect }: { onSelect: (s: SubSector) => void }) {
                   ইনস্টল
                 </button>
               )}
+              <button
+                type="button"
+                data-ocid="header.history_button"
+                onClick={onHistory}
+                className="flex items-center gap-1.5 bg-green-50 border border-green-200 text-green-800 text-xs font-semibold px-3 py-2 rounded-xl hover:bg-green-100 transition-colors shrink-0"
+                title="ইতিহাস"
+              >
+                <Clock className="w-3.5 h-3.5" />
+                ইতিহাস
+              </button>
+              <button
+                type="button"
+                data-ocid="header.qr_button"
+                onClick={() => setShowQR(true)}
+                className="flex items-center gap-1.5 bg-green-50 border border-green-200 text-green-800 text-xs font-semibold px-3 py-2 rounded-xl hover:bg-green-100 transition-colors shrink-0"
+                title="শেয়ার QR"
+              >
+                <QrCode className="w-3.5 h-3.5" />
+                QR
+              </button>
+              {isAdmin && (
+                <button
+                  type="button"
+                  data-ocid="header.admin_button"
+                  onClick={onAdmin}
+                  className="flex items-center gap-1.5 bg-green-700 text-white text-xs font-semibold px-3 py-2 rounded-xl hover:bg-green-800 transition-colors shrink-0"
+                  title="অ্যাডমিন প্যানেল"
+                >
+                  <Settings className="w-3.5 h-3.5" />
+                  অ্যাডমিন
+                </button>
+              )}
               <AuthHeaderButton />
             </div>
           </div>
@@ -585,7 +760,7 @@ function HomePage({ onSelect }: { onSelect: (s: SubSector) => void }) {
           initial="hidden"
           animate="visible"
         >
-          {subSectors.map((sector, i) => (
+          {mergedSectors.map((sector, i) => (
             <motion.button
               key={sector.id}
               type="button"
@@ -616,16 +791,10 @@ function HomePage({ onSelect }: { onSelect: (s: SubSector) => void }) {
       </main>
 
       <footer className="text-center py-6 text-xs text-muted-foreground">
-        © {new Date().getFullYear()}.{" "}
-        <a
-          href={`https://caffeine.ai?utm_source=caffeine-footer&utm_medium=referral&utm_content=${encodeURIComponent(window.location.hostname)}`}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="underline hover:text-foreground transition-colors"
-        >
-          caffeine.ai দিয়ে তৈরি ❤️
-        </a>
+        © {new Date().getFullYear()} বাংলাদেশের কৃষি হিসাব
       </footer>
+
+      <QRShareDialog open={showQR} onClose={() => setShowQR(false)} />
     </div>
   );
 }
@@ -684,7 +853,8 @@ function LoginPromptDialog({
 function SubSectorPage({
   sector,
   onBack,
-}: { sector: SubSector; onBack: () => void }) {
+  govPricesMap,
+}: { sector: SubSector; onBack: () => void; govPricesMap: GovPriceMap }) {
   const { identity } = useInternetIdentity();
   const isAuthenticated = !!identity && !identity.getPrincipal().isAnonymous();
   const { data: isSubscribed, isLoading: subLoading } = useIsSubscribed();
@@ -693,6 +863,20 @@ function SubSectorPage({
   const [calcStates, setCalcStates] = useState<Record<number, CalcState>>({});
   const [showLoginDialog, setShowLoginDialog] = useState(false);
   const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
+
+  // Merge gov prices for this sector
+  const mergedItems = sector.items.map((item) => {
+    const key = `${sector.id}#${item.name}`;
+    const override = govPricesMap[key];
+    return override
+      ? {
+          ...item,
+          govPrice: override.price,
+          govUnit: override.unit,
+          govQty: override.qty,
+        }
+      : item;
+  });
 
   const getCalcState = (idx: number): CalcState =>
     calcStates[idx] ?? { investment: "", sales: "", result: null };
@@ -743,7 +927,7 @@ function SubSectorPage({
               <ArrowLeft className="w-5 h-5" />
             </button>
             <img
-              src="/assets/generated/krishi-logo-transparent.dim_200x200.png"
+              src="/assets/generated/agri-logo-transparent.dim_120x120.png"
               alt="লোগো"
               className="w-9 h-9 object-contain"
             />
@@ -791,7 +975,7 @@ function SubSectorPage({
             সকল উপাদান
           </h2>
           <Badge className={`${sector.badgeClass} border-0`}>
-            {sector.items.length}টি উপাদান
+            {mergedItems.length}টি উপাদান
           </Badge>
         </div>
 
@@ -801,9 +985,9 @@ function SubSectorPage({
           initial="hidden"
           animate="visible"
         >
-          {sector.items.map((item, idx) => (
+          {mergedItems.map((item, idx) => (
             <motion.div
-              key={item}
+              key={item.name}
               data-ocid={`sector.item.${idx + 1}`}
               variants={itemVariants}
               className="bg-white rounded-xl border border-border shadow-xs overflow-hidden"
@@ -815,9 +999,14 @@ function SubSectorPage({
                   >
                     {sector.icon}
                   </div>
-                  <span className="font-medium text-sm text-foreground">
-                    {item}
-                  </span>
+                  <div>
+                    <span className="font-medium text-sm text-foreground block">
+                      {item.name}
+                    </span>
+                    <span className="text-xs text-green-700 font-medium">
+                      সরকারি দাম: ৳{item.govPrice} / {item.govQty} {item.govUnit}
+                    </span>
+                  </div>
                 </div>
                 <Button
                   size="sm"
@@ -841,6 +1030,8 @@ function SubSectorPage({
                       state={getCalcState(idx)}
                       onChange={(s) => handleCalcChange(idx, s)}
                       onClose={() => setExpandedIdx(null)}
+                      sector={sector.id}
+                      item={item.name}
                     />
                   </div>
                 )}
@@ -889,8 +1080,32 @@ function PaymentReturnHandler() {
   return null;
 }
 
+type AppView = "home" | "sector" | "history" | "admin";
+
 export default function App() {
+  const [view, setView] = useState<AppView>("home");
   const [selectedSector, setSelectedSector] = useState<SubSector | null>(null);
+
+  // Fetch government prices from backend
+  const { data: govPricesRaw = [] } = useGovPrices();
+
+  // Build lookup map: "sectorId#itemName" -> { price, unit, qty }
+  const govPricesMap: GovPriceMap = useMemo(() => {
+    const map: GovPriceMap = {};
+    for (const entry of govPricesRaw) {
+      map[`${entry.sector}#${entry.item}`] = {
+        price: entry.price,
+        unit: entry.unit,
+        qty: entry.qty,
+      };
+    }
+    return map;
+  }, [govPricesRaw]);
+
+  const goHome = () => {
+    setView("home");
+    setSelectedSector(null);
+  };
 
   return (
     <>
@@ -898,17 +1113,27 @@ export default function App() {
       <PaymentReturnHandler />
       <InstallBanner />
       <AnimatePresence mode="wait">
-        {!selectedSector ? (
+        {view === "admin" ? (
           <motion.div
-            key="home"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0, x: -30 }}
+            key="admin"
+            initial={{ opacity: 0, x: 30 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: 30 }}
             transition={{ duration: 0.2 }}
           >
-            <HomePage onSelect={(s) => setSelectedSector(s)} />
+            <AdminPanel onBack={goHome} />
           </motion.div>
-        ) : (
+        ) : view === "history" ? (
+          <motion.div
+            key="history"
+            initial={{ opacity: 0, x: 30 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: 30 }}
+            transition={{ duration: 0.2 }}
+          >
+            <HistoryPage onBack={goHome} />
+          </motion.div>
+        ) : view === "sector" && selectedSector ? (
           <motion.div
             key={selectedSector.id}
             initial={{ opacity: 0, x: 30 }}
@@ -918,7 +1143,26 @@ export default function App() {
           >
             <SubSectorPage
               sector={selectedSector}
-              onBack={() => setSelectedSector(null)}
+              onBack={goHome}
+              govPricesMap={govPricesMap}
+            />
+          </motion.div>
+        ) : (
+          <motion.div
+            key="home"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0, x: -30 }}
+            transition={{ duration: 0.2 }}
+          >
+            <HomePage
+              onSelect={(s) => {
+                setSelectedSector(s);
+                setView("sector");
+              }}
+              onHistory={() => setView("history")}
+              onAdmin={() => setView("admin")}
+              govPricesMap={govPricesMap}
             />
           </motion.div>
         )}

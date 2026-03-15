@@ -7,6 +7,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { useSubmitManualPayment } from "@/hooks/useQueries";
+import { useQRScanner } from "@/qr-code/useQRScanner";
 import {
   CheckCircle2,
   Copy,
@@ -22,7 +23,7 @@ import {
   TreePine,
 } from "lucide-react";
 import { motion } from "motion/react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 interface SubscriptionModalProps {
@@ -44,7 +45,7 @@ const features = [
 type PaymentMethod = "bkash" | "nagad" | "visa";
 
 const BKASH_NUMBER = "01516539960";
-const NAGAD_NUMBER = "01516539960";
+const NAGAD_NUMBER = "01618608670";
 
 const paymentMethods: {
   id: PaymentMethod;
@@ -101,6 +102,90 @@ const paymentMethods: {
     ],
   },
 ];
+
+function QRScannerSection({
+  onScan,
+}: {
+  onScan: (value: string) => void;
+}) {
+  const {
+    startScanning,
+    stopScanning,
+    qrResults,
+    videoRef,
+    canvasRef,
+    isScanning,
+    canStartScanning,
+    error,
+  } = useQRScanner({});
+
+  useEffect(() => {
+    if (qrResults && qrResults.length > 0) {
+      onScan(qrResults[0].data);
+      stopScanning();
+    }
+  }, [qrResults, onScan, stopScanning]);
+
+  return (
+    <div className="mt-2">
+      {!isScanning ? (
+        <button
+          type="button"
+          data-ocid="subscription.qr_scan_button"
+          onClick={startScanning}
+          disabled={!canStartScanning}
+          className="flex items-center gap-1.5 text-xs font-medium text-green-700 border border-green-300 bg-green-50 hover:bg-green-100 rounded-lg px-3 py-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          📷 QR স্ক্যান করুন
+        </button>
+      ) : (
+        <div className="space-y-2">
+          <div
+            className="relative rounded-xl overflow-hidden border-2 border-green-400 bg-black"
+            style={{ aspectRatio: "4/3", maxHeight: 200 }}
+          >
+            <video
+              ref={videoRef}
+              autoPlay
+              playsInline
+              muted
+              className="w-full h-full object-cover"
+            />
+            <canvas
+              ref={canvasRef}
+              data-ocid="subscription.qr_canvas_target"
+              className="hidden"
+            />
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+              <div className="w-36 h-36 border-2 border-white/70 rounded-lg relative">
+                <span className="absolute top-0 left-0 w-5 h-5 border-t-2 border-l-2 border-green-400 rounded-tl" />
+                <span className="absolute top-0 right-0 w-5 h-5 border-t-2 border-r-2 border-green-400 rounded-tr" />
+                <span className="absolute bottom-0 left-0 w-5 h-5 border-b-2 border-l-2 border-green-400 rounded-bl" />
+                <span className="absolute bottom-0 right-0 w-5 h-5 border-b-2 border-r-2 border-green-400 rounded-br" />
+              </div>
+            </div>
+          </div>
+          <p className="text-xs text-center text-muted-foreground">
+            QR কোড ক্যামেরার সামনে ধরুন
+          </p>
+          <button
+            type="button"
+            data-ocid="subscription.qr_stop_button"
+            onClick={stopScanning}
+            className="w-full text-xs text-red-600 border border-red-200 bg-red-50 hover:bg-red-100 rounded-lg py-2 transition-colors"
+          >
+            স্ক্যান বন্ধ করুন
+          </button>
+        </div>
+      )}
+      {error && (
+        <p className="text-xs text-red-600 mt-1">
+          ক্যামেরা ব্যবহার করা যাচ্ছে না: {error?.message}
+        </p>
+      )}
+    </div>
+  );
+}
 
 export function SubscriptionModal({ open, onClose }: SubscriptionModalProps) {
   const [selectedMethod, setSelectedMethod] = useState<PaymentMethod>("bkash");
@@ -337,6 +422,7 @@ export function SubscriptionModal({ open, onClose }: SubscriptionModalProps) {
                   className="h-11 text-base font-mono"
                   autoFocus
                 />
+                <QRScannerSection onScan={(val) => setTransactionId(val)} />
                 <p className="text-xs text-muted-foreground mt-2">
                   {selected.label} অ্যাপে পেমেন্টের পর "Transaction ID" বা "TxID"
                   দেখতে পাবেন।

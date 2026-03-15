@@ -28,9 +28,26 @@ export const Subscriber = IDL.Record({
   'status' : SubscriptionStatus,
   'principal' : IDL.Principal,
 });
+export const CalcRecord = IDL.Record({
+  'id' : IDL.Nat,
+  'item' : IDL.Text,
+  'difference' : IDL.Float64,
+  'investment' : IDL.Float64,
+  'sector' : IDL.Text,
+  'sales' : IDL.Float64,
+  'timestamp' : IDL.Int,
+  'resultType' : IDL.Text,
+});
 export const UserProfile = IDL.Record({
   'name' : IDL.Text,
   'language' : IDL.Text,
+});
+export const ManualPaymentRecord = IDL.Record({
+  'method' : IDL.Text,
+  'principal' : IDL.Principal,
+  'verified' : IDL.Bool,
+  'timestamp' : IDL.Int,
+  'transactionId' : IDL.Text,
 });
 export const StripeSessionStatus = IDL.Variant({
   'completed' : IDL.Record({
@@ -38,6 +55,12 @@ export const StripeSessionStatus = IDL.Variant({
     'response' : IDL.Text,
   }),
   'failed' : IDL.Record({ 'error' : IDL.Text }),
+});
+export const YearlySummary = IDL.Record({
+  'totalInvestment' : IDL.Float64,
+  'totalLoss' : IDL.Float64,
+  'totalProfit' : IDL.Float64,
+  'totalSales' : IDL.Float64,
 });
 export const StripeConfiguration = IDL.Record({
   'allowedCountries' : IDL.Vec(IDL.Text),
@@ -78,20 +101,30 @@ export const idlService = IDL.Service({
       [],
     ),
   'deactivateSubscription' : IDL.Func([IDL.Principal], [], []),
+  'deleteCalcRecord' : IDL.Func([IDL.Nat], [], []),
   'getAllSubscribers' : IDL.Func([], [IDL.Vec(Subscriber)], ['query']),
+  'getCalcHistory' : IDL.Func([], [IDL.Vec(CalcRecord)], ['query']),
   'getCallerUserProfile' : IDL.Func([], [IDL.Opt(UserProfile)], ['query']),
   'getCallerUserRole' : IDL.Func([], [UserRole], ['query']),
+  'getManualPayments' : IDL.Func([], [IDL.Vec(ManualPaymentRecord)], ['query']),
   'getStripeSessionStatus' : IDL.Func([IDL.Text], [StripeSessionStatus], []),
   'getUserProfile' : IDL.Func(
       [IDL.Principal],
       [IDL.Opt(UserProfile)],
       ['query'],
     ),
+  'getYearlySummary' : IDL.Func([], [YearlySummary], ['query']),
   'isCallerAdmin' : IDL.Func([], [IDL.Bool], ['query']),
   'isCallerSubscribed' : IDL.Func([], [IDL.Bool], ['query']),
   'isStripeConfigured' : IDL.Func([], [IDL.Bool], ['query']),
+  'saveCalcRecord' : IDL.Func(
+      [IDL.Text, IDL.Text, IDL.Float64, IDL.Float64, IDL.Float64, IDL.Text],
+      [IDL.Nat],
+      [],
+    ),
   'saveCallerUserProfile' : IDL.Func([UserProfile], [], []),
   'setStripeConfiguration' : IDL.Func([StripeConfiguration], [], []),
+  'submitManualPayment' : IDL.Func([IDL.Text, IDL.Text], [IDL.Bool], []),
   'transform' : IDL.Func(
       [TransformationInput],
       [TransformationOutput],
@@ -122,13 +155,36 @@ export const idlFactory = ({ IDL }) => {
     'status' : SubscriptionStatus,
     'principal' : IDL.Principal,
   });
+  const CalcRecord = IDL.Record({
+    'id' : IDL.Nat,
+    'item' : IDL.Text,
+    'difference' : IDL.Float64,
+    'investment' : IDL.Float64,
+    'sector' : IDL.Text,
+    'sales' : IDL.Float64,
+    'timestamp' : IDL.Int,
+    'resultType' : IDL.Text,
+  });
   const UserProfile = IDL.Record({ 'name' : IDL.Text, 'language' : IDL.Text });
+  const ManualPaymentRecord = IDL.Record({
+    'method' : IDL.Text,
+    'principal' : IDL.Principal,
+    'verified' : IDL.Bool,
+    'timestamp' : IDL.Int,
+    'transactionId' : IDL.Text,
+  });
   const StripeSessionStatus = IDL.Variant({
     'completed' : IDL.Record({
       'userPrincipal' : IDL.Opt(IDL.Text),
       'response' : IDL.Text,
     }),
     'failed' : IDL.Record({ 'error' : IDL.Text }),
+  });
+  const YearlySummary = IDL.Record({
+    'totalInvestment' : IDL.Float64,
+    'totalLoss' : IDL.Float64,
+    'totalProfit' : IDL.Float64,
+    'totalSales' : IDL.Float64,
   });
   const StripeConfiguration = IDL.Record({
     'allowedCountries' : IDL.Vec(IDL.Text),
@@ -170,20 +226,34 @@ export const idlFactory = ({ IDL }) => {
         [],
       ),
     'deactivateSubscription' : IDL.Func([IDL.Principal], [], []),
+    'deleteCalcRecord' : IDL.Func([IDL.Nat], [], []),
     'getAllSubscribers' : IDL.Func([], [IDL.Vec(Subscriber)], ['query']),
+    'getCalcHistory' : IDL.Func([], [IDL.Vec(CalcRecord)], ['query']),
     'getCallerUserProfile' : IDL.Func([], [IDL.Opt(UserProfile)], ['query']),
     'getCallerUserRole' : IDL.Func([], [UserRole], ['query']),
+    'getManualPayments' : IDL.Func(
+        [],
+        [IDL.Vec(ManualPaymentRecord)],
+        ['query'],
+      ),
     'getStripeSessionStatus' : IDL.Func([IDL.Text], [StripeSessionStatus], []),
     'getUserProfile' : IDL.Func(
         [IDL.Principal],
         [IDL.Opt(UserProfile)],
         ['query'],
       ),
+    'getYearlySummary' : IDL.Func([], [YearlySummary], ['query']),
     'isCallerAdmin' : IDL.Func([], [IDL.Bool], ['query']),
     'isCallerSubscribed' : IDL.Func([], [IDL.Bool], ['query']),
     'isStripeConfigured' : IDL.Func([], [IDL.Bool], ['query']),
+    'saveCalcRecord' : IDL.Func(
+        [IDL.Text, IDL.Text, IDL.Float64, IDL.Float64, IDL.Float64, IDL.Text],
+        [IDL.Nat],
+        [],
+      ),
     'saveCallerUserProfile' : IDL.Func([UserProfile], [], []),
     'setStripeConfiguration' : IDL.Func([StripeConfiguration], [], []),
+    'submitManualPayment' : IDL.Func([IDL.Text, IDL.Text], [IDL.Bool], []),
     'transform' : IDL.Func(
         [TransformationInput],
         [TransformationOutput],

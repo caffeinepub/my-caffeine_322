@@ -2,12 +2,13 @@ import Map "mo:core/Map";
 import Principal "mo:core/Principal";
 import Iter "mo:core/Iter";
 import Runtime "mo:core/Runtime";
+import Array "mo:core/Array";
+import Time "mo:core/Time";
 
 import AccessControl "authorization/access-control";
 import MixinAuthorization "authorization/MixinAuthorization";
 import Stripe "stripe/stripe";
 import OutCall "http-outcalls/outcall";
-
 
 actor {
   let accessControlState = AccessControl.initState();
@@ -92,7 +93,6 @@ actor {
     subscribers.entries().toArray().map(func((p, s)) { { principal = p; status = s } });
   };
 
-  // Submit manual payment (bKash/Nagad) - grants subscription immediately, admin can revoke if fraudulent
   public shared ({ caller }) func submitManualPayment(transactionId : Text, method : Text) : async Bool {
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
       Runtime.trap("Unauthorized: Only logged-in users can submit payments");
@@ -111,7 +111,6 @@ actor {
     true;
   };
 
-  // Admin: get all manual payment records for verification
   public query ({ caller }) func getManualPayments() : async [ManualPaymentRecord] {
     if (not (AccessControl.isAdmin(accessControlState, caller))) {
       Runtime.trap("[SUBSCRIBE] Unauthorized: Only admins can view payment records!");
@@ -119,7 +118,6 @@ actor {
     manualPayments.entries().toArray().map(func((_, r)) { r });
   };
 
-  // Called by admin after Stripe payment verification
   public shared ({ caller }) func activateSubscription(userPrincipal : Principal, paymentSessionId : Text) : async Bool {
     if (not (AccessControl.isAdmin(accessControlState, caller))) {
       Runtime.trap("[SUBSCRIBE] activateSubscription Unauthorized: Only admins can activate subscriptions!");
@@ -179,5 +177,173 @@ actor {
       Runtime.trap("[SUBSCRIBE] deactivateSubscription Unauthorized: Only admins can deactivate subscriptions!");
     };
     subscribers.add(userPrincipal, #inactive);
+  };
+
+  // Calculation history feature
+  public type CalcRecord = {
+    id : Nat;
+    sector : Text;
+    item : Text;
+    investment : Float;
+    sales : Float;
+    difference : Float;
+    resultType : Text;
+    timestamp : Int;
+  };
+
+  public type YearlySummary = {
+    totalInvestment : Float;
+    totalSales : Float;
+    totalProfit : Float;
+    totalLoss : Float;
+  };
+
+  let calcHistories = Map.empty<Principal, Map.Map<Nat, CalcRecord>>();
+  var nextRecordId = 1;
+
+  public shared ({ caller }) func saveCalcRecord(sector : Text, item : Text, investment : Float, sales : Float, difference : Float, resultType : Text) : async Nat {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only logged-in users can save calc records");
+    };
+    requireActiveSubscription(caller);
+
+    let record : CalcRecord = {
+      id = nextRecordId;
+      sector;
+      item;
+      investment;
+      sales;
+      difference;
+      resultType;
+      timestamp = Time.now();
+    };
+
+    let userHistory = switch (calcHistories.get(caller)) {
+      case (null) { Map.empty<Nat, CalcRecord>() };
+      case (?history) { history };
+    };
+
+    userHistory.add(nextRecordId, record);
+    calcHistories.add(caller, userHistory);
+
+    nextRecordId += 1;
+    record.id;
+  };
+
+  public query ({ caller }) func getCalcHistory() : async [CalcRecord] {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only logged-in users can access calc history");
+    };
+    requireActiveSubscription(caller);
+
+    switch (calcHistories.get(caller)) {
+      case (null) { [] };
+      case (?history) {
+        let now = Time.now();
+        let oneYearNanos = 365 * 24 * 60 * 60 * 1_000_000_000;
+        let filtered = history.values().toArray().filter(
+          func(r) {
+            r.timestamp >= (now - oneYearNanos : Int);
+          }
+        );
+        filtered.reverse();
+      };
+    };
+  };
+
+  public shared ({ caller }) func deleteCalcRecord(id : Nat) : async () {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only logged-in users can delete calc records");
+    };
+    requireActiveSubscription(caller);
+
+    switch (calcHistories.get(caller)) {
+      case (null) {
+        Runtime.trap("Calculation record does not exist");
+      };
+      case (?history) {
+        if (not history.containsKey(id)) {
+          Runtime.trap("Calculation record does not exist");
+        };
+        history.remove(id);
+        calcHistories.add(caller, history);
+      };
+    };
+  };
+
+  public query ({ caller }) func getYearlySummary() : async YearlySummary {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only logged-in users can access yearly summary");
+    };
+    requireActiveSubscription(caller);
+
+    var totalInvestment = 0.0;
+    var totalSales = 0.0;
+    var totalProfit = 0.0;
+    var totalLoss = 0.0;
+
+    let now = Time.now();
+    let oneYearNanos = 365 * 24 * 60 * 60 * 1_000_000_000;
+
+    switch (calcHistories.get(caller)) {
+      case (null) {};
+      case (?history) {
+        history.values().forEach(
+          func(record) {
+            if (record.timestamp >= (now - oneYearNanos : Int)) {
+              totalInvestment += record.investment;
+              totalSales += record.sales;
+              if (record.difference > 0) {
+                totalProfit += record.difference;
+              } else {
+                totalLoss += record.difference;
+              };
+            };
+          }
+        );
+      };
+    };
+
+    {
+      totalInvestment;
+      totalSales;
+      totalProfit;
+      totalLoss;
+    };
+  };
+
+  // Government price management
+  public type GovPriceEntry = {
+    sector : Text;
+    item : Text;
+    price : Float;
+    unit : Text;
+    qty : Float;
+  };
+
+  let govPrices = Map.empty<Text, GovPriceEntry>();
+
+  func govPriceKey(sector : Text, item : Text) : Text {
+    sector # "#" # item;
+  };
+
+  public shared ({ caller }) func setGovPrice(sector : Text, item : Text, price : Float, unit : Text, qty : Float) : async () {
+    if (not (AccessControl.isAdmin(accessControlState, caller))) {
+      Runtime.trap("Unauthorized: Only admins can set government prices");
+    };
+    govPrices.add(govPriceKey(sector, item), { sector; item; price; unit; qty });
+  };
+
+  public shared ({ caller }) func setAllGovPrices(entries : [GovPriceEntry]) : async () {
+    if (not (AccessControl.isAdmin(accessControlState, caller))) {
+      Runtime.trap("Unauthorized: Only admins can set government prices");
+    };
+    for (entry in entries.vals()) {
+      govPrices.add(govPriceKey(entry.sector, entry.item), entry);
+    };
+  };
+
+  public query func getGovPrices() : async [GovPriceEntry] {
+    govPrices.values().toArray();
   };
 };

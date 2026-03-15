@@ -89,12 +89,33 @@ export class ExternalBlob {
         return this;
     }
 }
-export interface http_request_result {
+export interface ManualPaymentRecord {
+    method: string;
+    principal: Principal;
+    verified: boolean;
+    timestamp: bigint;
+    transactionId: string;
+}
+export interface CalcRecord {
+    id: bigint;
+    item: string;
+    difference: number;
+    investment: number;
+    sector: string;
+    sales: number;
+    timestamp: bigint;
+    resultType: string;
+}
+export interface TransformationOutput {
     status: bigint;
     body: Uint8Array;
     headers: Array<http_header>;
 }
-export interface TransformationOutput {
+export interface http_header {
+    value: string;
+    name: string;
+}
+export interface http_request_result {
     status: bigint;
     body: Uint8Array;
     headers: Array<http_header>;
@@ -105,6 +126,12 @@ export interface ShoppingItem {
     quantity: bigint;
     priceInCents: bigint;
     productDescription: string;
+}
+export interface YearlySummary {
+    totalInvestment: number;
+    totalLoss: number;
+    totalProfit: number;
+    totalSales: number;
 }
 export interface TransformationInput {
     context: Uint8Array;
@@ -134,10 +161,6 @@ export interface UserProfile {
     name: string;
     language: string;
 }
-export interface http_header {
-    value: string;
-    name: string;
-}
 export enum SubscriptionStatus {
     active = "active",
     inactive = "inactive"
@@ -149,22 +172,28 @@ export enum UserRole {
 }
 export interface backendInterface {
     _initializeAccessControlWithSecret(userSecret: string): Promise<void>;
-    accessCalculator(calculatorType: string): Promise<boolean>;
+    accessCalculator(_calculatorType: string): Promise<boolean>;
     activateSubscription(userPrincipal: Principal, paymentSessionId: string): Promise<boolean>;
     assignCallerUserRole(user: Principal, role: UserRole): Promise<void>;
-    calculateCropYield(area: number, cropType: string): Promise<number>;
+    calculateCropYield(area: number, _cropType: string): Promise<number>;
     createCheckoutSession(items: Array<ShoppingItem>, successUrl: string, cancelUrl: string): Promise<string>;
     deactivateSubscription(userPrincipal: Principal): Promise<void>;
+    deleteCalcRecord(id: bigint): Promise<void>;
     getAllSubscribers(): Promise<Array<Subscriber>>;
+    getCalcHistory(): Promise<Array<CalcRecord>>;
     getCallerUserProfile(): Promise<UserProfile | null>;
     getCallerUserRole(): Promise<UserRole>;
+    getManualPayments(): Promise<Array<ManualPaymentRecord>>;
     getStripeSessionStatus(sessionId: string): Promise<StripeSessionStatus>;
     getUserProfile(user: Principal): Promise<UserProfile | null>;
+    getYearlySummary(): Promise<YearlySummary>;
     isCallerAdmin(): Promise<boolean>;
     isCallerSubscribed(): Promise<boolean>;
     isStripeConfigured(): Promise<boolean>;
+    saveCalcRecord(sector: string, item: string, investment: number, sales: number, difference: number, resultType: string): Promise<bigint>;
     saveCallerUserProfile(profile: UserProfile): Promise<void>;
     setStripeConfiguration(config: StripeConfiguration): Promise<void>;
+    submitManualPayment(transactionId: string, method: string): Promise<boolean>;
     transform(input: TransformationInput): Promise<TransformationOutput>;
 }
 import type { StripeSessionStatus as _StripeSessionStatus, Subscriber as _Subscriber, SubscriptionStatus as _SubscriptionStatus, UserProfile as _UserProfile, UserRole as _UserRole } from "./declarations/backend.did.d.ts";
@@ -268,6 +297,20 @@ export class Backend implements backendInterface {
             return result;
         }
     }
+    async deleteCalcRecord(arg0: bigint): Promise<void> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.deleteCalcRecord(arg0);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.deleteCalcRecord(arg0);
+            return result;
+        }
+    }
     async getAllSubscribers(): Promise<Array<Subscriber>> {
         if (this.processError) {
             try {
@@ -280,6 +323,20 @@ export class Backend implements backendInterface {
         } else {
             const result = await this.actor.getAllSubscribers();
             return from_candid_vec_n3(this._uploadFile, this._downloadFile, result);
+        }
+    }
+    async getCalcHistory(): Promise<Array<CalcRecord>> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getCalcHistory();
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getCalcHistory();
+            return result;
         }
     }
     async getCallerUserProfile(): Promise<UserProfile | null> {
@@ -310,6 +367,20 @@ export class Backend implements backendInterface {
             return from_candid_UserRole_n9(this._uploadFile, this._downloadFile, result);
         }
     }
+    async getManualPayments(): Promise<Array<ManualPaymentRecord>> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getManualPayments();
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getManualPayments();
+            return result;
+        }
+    }
     async getStripeSessionStatus(arg0: string): Promise<StripeSessionStatus> {
         if (this.processError) {
             try {
@@ -336,6 +407,20 @@ export class Backend implements backendInterface {
         } else {
             const result = await this.actor.getUserProfile(arg0);
             return from_candid_opt_n8(this._uploadFile, this._downloadFile, result);
+        }
+    }
+    async getYearlySummary(): Promise<YearlySummary> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getYearlySummary();
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getYearlySummary();
+            return result;
         }
     }
     async isCallerAdmin(): Promise<boolean> {
@@ -380,6 +465,20 @@ export class Backend implements backendInterface {
             return result;
         }
     }
+    async saveCalcRecord(arg0: string, arg1: string, arg2: number, arg3: number, arg4: number, arg5: string): Promise<bigint> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.saveCalcRecord(arg0, arg1, arg2, arg3, arg4, arg5);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.saveCalcRecord(arg0, arg1, arg2, arg3, arg4, arg5);
+            return result;
+        }
+    }
     async saveCallerUserProfile(arg0: UserProfile): Promise<void> {
         if (this.processError) {
             try {
@@ -405,6 +504,20 @@ export class Backend implements backendInterface {
             }
         } else {
             const result = await this.actor.setStripeConfiguration(arg0);
+            return result;
+        }
+    }
+    async submitManualPayment(arg0: string, arg1: string): Promise<boolean> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.submitManualPayment(arg0, arg1);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.submitManualPayment(arg0, arg1);
             return result;
         }
     }

@@ -77,3 +77,136 @@ export function useSubmitManualPayment() {
     },
   });
 }
+
+export function useCalcHistory() {
+  const { actor, isFetching } = useActor();
+  return useQuery({
+    queryKey: ["calcHistory"],
+    queryFn: async () => {
+      if (!actor) return [];
+      return actor.getCalcHistory();
+    },
+    enabled: !!actor && !isFetching,
+    staleTime: 10_000,
+  });
+}
+
+export function useYearlySummary() {
+  const { actor, isFetching } = useActor();
+  return useQuery({
+    queryKey: ["yearlySummary"],
+    queryFn: async () => {
+      if (!actor) return null;
+      return actor.getYearlySummary();
+    },
+    enabled: !!actor && !isFetching,
+    staleTime: 10_000,
+  });
+}
+
+export function useSaveCalcRecord() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (params: {
+      sector: string;
+      item: string;
+      investment: number;
+      sales: number;
+      difference: number;
+      resultType: string;
+    }) => {
+      if (!actor) throw new Error("Actor not ready");
+      return actor.saveCalcRecord(
+        params.sector,
+        params.item,
+        params.investment,
+        params.sales,
+        params.difference,
+        params.resultType,
+      );
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["calcHistory"] });
+      queryClient.invalidateQueries({ queryKey: ["yearlySummary"] });
+    },
+  });
+}
+
+export function useDeleteCalcRecord() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: bigint) => {
+      if (!actor) throw new Error("Actor not ready");
+      return actor.deleteCalcRecord(id);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["calcHistory"] });
+      queryClient.invalidateQueries({ queryKey: ["yearlySummary"] });
+    },
+  });
+}
+
+export interface GovPriceEntry {
+  sector: string;
+  item: string;
+  price: number;
+  unit: string;
+  qty: number;
+}
+
+export function useGovPrices() {
+  const { actor, isFetching } = useActor();
+  return useQuery<GovPriceEntry[]>({
+    queryKey: ["govPrices"],
+    queryFn: async () => {
+      if (!actor) return [];
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const result = await (actor as any).getGovPrices();
+      return result as GovPriceEntry[];
+    },
+    enabled: !!actor && !isFetching,
+    staleTime: 60_000,
+  });
+}
+
+export function useSetGovPrice() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (params: {
+      sector: string;
+      item: string;
+      price: number;
+      unit: string;
+      qty: number;
+    }) => {
+      if (!actor) throw new Error("Actor not ready");
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      return (actor as any).setGovPrice(
+        params.sector,
+        params.item,
+        params.price,
+        params.unit,
+        params.qty,
+      );
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["govPrices"] });
+    },
+  });
+}
+
+export function useIsAdmin() {
+  const { actor, isFetching } = useActor();
+  return useQuery<boolean>({
+    queryKey: ["isAdmin"],
+    queryFn: async () => {
+      if (!actor) return false;
+      return actor.isCallerAdmin();
+    },
+    enabled: !!actor && !isFetching,
+    staleTime: 60_000,
+  });
+}
