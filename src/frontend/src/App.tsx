@@ -1,5 +1,6 @@
 import { AdminPanel } from "@/components/AdminPanel";
 import { ComplaintBox } from "@/components/ComplaintBox";
+import { EKrishiPage } from "@/components/EKrishiPage";
 import { FeedbackSection } from "@/components/FeedbackSection";
 import { HistoryPage } from "@/components/HistoryPage";
 import { SubscriptionModal } from "@/components/SubscriptionModal";
@@ -25,6 +26,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import {
   AlertCircle,
   ArrowLeft,
+  BookOpen,
   Calculator,
   CheckCircle2,
   Clock,
@@ -637,11 +639,13 @@ function HomePage({
   onSelect,
   onHistory,
   onAdmin,
+  onEKrishi,
   govPricesMap,
 }: {
   onSelect: (s: SubSector) => void;
   onHistory: () => void;
   onAdmin: () => void;
+  onEKrishi: () => void;
   govPricesMap: GovPriceMap;
 }) {
   const { canInstall, install } = useInstallPrompt();
@@ -699,7 +703,7 @@ function HomePage({
                 </p>
               </div>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap justify-end">
               {canInstall && (
                 <button
                   type="button"
@@ -711,6 +715,16 @@ function HomePage({
                   ইনস্টল
                 </button>
               )}
+              <button
+                type="button"
+                data-ocid="header.ekrishi_button"
+                onClick={onEKrishi}
+                className="flex items-center gap-1.5 bg-green-50 border border-green-200 text-green-800 text-xs font-semibold px-3 py-2 rounded-xl hover:bg-green-100 transition-colors shrink-0"
+                title="ই-কৃষি সেবা"
+              >
+                <BookOpen className="w-3.5 h-3.5" />
+                ই-কৃষি
+              </button>
               <button
                 type="button"
                 data-ocid="header.history_button"
@@ -817,6 +831,34 @@ function HomePage({
             </motion.button>
           ))}
         </motion.div>
+
+        {/* E-Krishi Banner */}
+        <motion.button
+          type="button"
+          data-ocid="home.ekrishi_button"
+          onClick={onEKrishi}
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.5, duration: 0.4 }}
+          whileHover={{ scale: 1.01 }}
+          whileTap={{ scale: 0.99 }}
+          className="mt-4 w-full text-left p-4 rounded-2xl bg-gradient-to-r from-green-700 to-emerald-600 text-white border-0 cursor-pointer shadow-md"
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center shrink-0">
+              <BookOpen className="w-6 h-6" />
+            </div>
+            <div>
+              <h3 className="font-bold text-base leading-tight">ই-কৃষি সেবা</h3>
+              <p className="text-xs text-green-100 mt-0.5">
+                বাংলাদেশ ও আন্তর্জাতিক উন্নয়নমূলক কৃষি তথ্য
+              </p>
+              <p className="text-xs text-green-200 mt-1">
+                ১৫+ তথ্যসূত্র • FAO • BRRI • World Bank
+              </p>
+            </div>
+          </div>
+        </motion.button>
       </main>
 
       <FeedbackSection />
@@ -1115,7 +1157,7 @@ function PaymentReturnHandler() {
   return null;
 }
 
-type AppView = "home" | "sector" | "history" | "admin";
+type AppView = "home" | "sector" | "history" | "admin" | "ekrishi";
 
 export default function App() {
   const [view, setView] = useState<AppView>("home");
@@ -1168,6 +1210,16 @@ export default function App() {
           >
             <HistoryPage onBack={goHome} />
           </motion.div>
+        ) : view === "ekrishi" ? (
+          <motion.div
+            key="ekrishi"
+            initial={{ opacity: 0, x: 30 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: 30 }}
+            transition={{ duration: 0.2 }}
+          >
+            <EKrishiPage onBack={goHome} />
+          </motion.div>
         ) : view === "sector" && selectedSector ? (
           <motion.div
             key={selectedSector.id}
@@ -1197,6 +1249,7 @@ export default function App() {
               }}
               onHistory={() => setView("history")}
               onAdmin={() => setView("admin")}
+              onEKrishi={() => setView("ekrishi")}
               govPricesMap={govPricesMap}
             />
           </motion.div>
