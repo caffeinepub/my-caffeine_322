@@ -1,6 +1,7 @@
 import { AdminPanel } from "@/components/AdminPanel";
 import { ComplaintBox } from "@/components/ComplaintBox";
 import { EKrishiPage } from "@/components/EKrishiPage";
+import { FeaturesPage } from "@/components/FeaturesPage";
 import { FeedbackSection } from "@/components/FeedbackSection";
 import { HistoryPage } from "@/components/HistoryPage";
 import { SubscriptionModal } from "@/components/SubscriptionModal";
@@ -640,12 +641,14 @@ function HomePage({
   onHistory,
   onAdmin,
   onEKrishi,
+  onFeatures,
   govPricesMap,
 }: {
   onSelect: (s: SubSector) => void;
   onHistory: () => void;
   onAdmin: () => void;
   onEKrishi: () => void;
+  onFeatures: () => void;
   govPricesMap: GovPriceMap;
 }) {
   const { canInstall, install } = useInstallPrompt();
@@ -724,6 +727,15 @@ function HomePage({
               >
                 <BookOpen className="w-3.5 h-3.5" />
                 ই-কৃষি
+              </button>
+              <button
+                type="button"
+                data-ocid="header.features_button"
+                onClick={onFeatures}
+                className="flex items-center gap-1.5 bg-emerald-600 text-white text-xs font-semibold px-3 py-2 rounded-xl hover:bg-emerald-700 transition-colors shrink-0"
+                title="স্মার্ট সেবাসমূহ"
+              >
+                🌟 সেবাসমূহ
               </button>
               <button
                 type="button"
@@ -1157,7 +1169,7 @@ function PaymentReturnHandler() {
   return null;
 }
 
-type AppView = "home" | "sector" | "history" | "admin" | "ekrishi";
+type AppView = "home" | "sector" | "history" | "admin" | "ekrishi" | "features";
 
 export default function App() {
   const [view, setView] = useState<AppView>("home");
@@ -1220,6 +1232,16 @@ export default function App() {
           >
             <EKrishiPage onBack={goHome} />
           </motion.div>
+        ) : view === "features" ? (
+          <motion.div
+            key="features"
+            initial={{ opacity: 0, x: 30 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: 30 }}
+            transition={{ duration: 0.2 }}
+          >
+            <FeaturesPage onBack={goHome} />
+          </motion.div>
         ) : view === "sector" && selectedSector ? (
           <motion.div
             key={selectedSector.id}
@@ -1250,6 +1272,7 @@ export default function App() {
               onHistory={() => setView("history")}
               onAdmin={() => setView("admin")}
               onEKrishi={() => setView("ekrishi")}
+              onFeatures={() => setView("features")}
               govPricesMap={govPricesMap}
             />
           </motion.div>
