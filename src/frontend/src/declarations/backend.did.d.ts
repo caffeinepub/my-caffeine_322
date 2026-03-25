@@ -73,10 +73,35 @@ export interface http_request_result {
   'body' : Uint8Array,
   'headers' : Array<http_header>,
 }
+export interface Feedback {
+  'id' : bigint,
+  'principal' : Principal,
+  'name' : string,
+  'rating' : bigint,
+  'text' : string,
+  'timestamp' : bigint,
+  'approved' : boolean,
+}
+export interface Complaint {
+  'id' : bigint,
+  'principal' : Principal,
+  'name' : string,
+  'text' : string,
+  'timestamp' : bigint,
+  'status' : string,
+}
+export interface GovPriceEntry {
+  'sector' : string,
+  'item' : string,
+  'price' : number,
+  'unit' : string,
+  'qty' : number,
+}
 export interface _SERVICE {
   '_initializeAccessControlWithSecret' : ActorMethod<[string], undefined>,
   'accessCalculator' : ActorMethod<[string], boolean>,
   'activateSubscription' : ActorMethod<[Principal, string], boolean>,
+  'approveFeedback' : ActorMethod<[bigint], undefined>,
   'assignCallerUserRole' : ActorMethod<[Principal, UserRole], undefined>,
   'calculateCropYield' : ActorMethod<[number, string], number>,
   'createCheckoutSession' : ActorMethod<
@@ -85,10 +110,15 @@ export interface _SERVICE {
   >,
   'deactivateSubscription' : ActorMethod<[Principal], undefined>,
   'deleteCalcRecord' : ActorMethod<[bigint], undefined>,
+  'deleteFeedback' : ActorMethod<[bigint], undefined>,
+  'getAllFeedbacks' : ActorMethod<[], Array<Feedback>>,
   'getAllSubscribers' : ActorMethod<[], Array<Subscriber>>,
+  'getApprovedFeedbacks' : ActorMethod<[], Array<Feedback>>,
   'getCalcHistory' : ActorMethod<[], Array<CalcRecord>>,
   'getCallerUserProfile' : ActorMethod<[], [] | [UserProfile]>,
   'getCallerUserRole' : ActorMethod<[], UserRole>,
+  'getComplaints' : ActorMethod<[], Array<Complaint>>,
+  'getGovPrices' : ActorMethod<[], Array<GovPriceEntry>>,
   'getManualPayments' : ActorMethod<[], Array<ManualPaymentRecord>>,
   'getStripeSessionStatus' : ActorMethod<[string], StripeSessionStatus>,
   'getUserProfile' : ActorMethod<[Principal], [] | [UserProfile]>,
@@ -101,9 +131,14 @@ export interface _SERVICE {
     bigint
   >,
   'saveCallerUserProfile' : ActorMethod<[UserProfile], undefined>,
+  'setAllGovPrices' : ActorMethod<[Array<GovPriceEntry>], undefined>,
+  'setGovPrice' : ActorMethod<[string, string, number, string, number], undefined>,
   'setStripeConfiguration' : ActorMethod<[StripeConfiguration], undefined>,
+  'submitComplaint' : ActorMethod<[string, string], bigint>,
+  'submitFeedback' : ActorMethod<[string, bigint, string], bigint>,
   'submitManualPayment' : ActorMethod<[string, string], boolean>,
   'transform' : ActorMethod<[TransformationInput], TransformationOutput>,
+  'updateComplaintStatus' : ActorMethod<[bigint, string], undefined>,
 }
 export declare const idlService: IDL.ServiceClass;
 export declare const idlInitArgs: IDL.Type[];

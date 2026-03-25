@@ -535,6 +535,61 @@ export class Backend implements backendInterface {
             return result;
         }
     }
+    async submitFeedback(arg0: string, arg1: bigint, arg2: string): Promise<bigint> {
+        if (this.processError) {
+            try { return await this.actor.submitFeedback(arg0, arg1, arg2); } catch (e) { this.processError(e); throw new Error("unreachable"); }
+        } else { return await this.actor.submitFeedback(arg0, arg1, arg2); }
+    }
+    async submitComplaint(arg0: string, arg1: string): Promise<bigint> {
+        if (this.processError) {
+            try { return await this.actor.submitComplaint(arg0, arg1); } catch (e) { this.processError(e); throw new Error("unreachable"); }
+        } else { return await this.actor.submitComplaint(arg0, arg1); }
+    }
+    async getApprovedFeedbacks(): Promise<any[]> {
+        if (this.processError) {
+            try { return await this.actor.getApprovedFeedbacks(); } catch (e) { this.processError(e); throw new Error("unreachable"); }
+        } else { return await this.actor.getApprovedFeedbacks(); }
+    }
+    async getAllFeedbacks(): Promise<any[]> {
+        if (this.processError) {
+            try { return await this.actor.getAllFeedbacks(); } catch (e) { this.processError(e); throw new Error("unreachable"); }
+        } else { return await this.actor.getAllFeedbacks(); }
+    }
+    async deleteFeedback(arg0: bigint): Promise<void> {
+        if (this.processError) {
+            try { return await this.actor.deleteFeedback(arg0); } catch (e) { this.processError(e); throw new Error("unreachable"); }
+        } else { return await this.actor.deleteFeedback(arg0); }
+    }
+    async approveFeedback(arg0: bigint): Promise<void> {
+        if (this.processError) {
+            try { return await this.actor.approveFeedback(arg0); } catch (e) { this.processError(e); throw new Error("unreachable"); }
+        } else { return await this.actor.approveFeedback(arg0); }
+    }
+    async getComplaints(): Promise<any[]> {
+        if (this.processError) {
+            try { return await this.actor.getComplaints(); } catch (e) { this.processError(e); throw new Error("unreachable"); }
+        } else { return await this.actor.getComplaints(); }
+    }
+    async updateComplaintStatus(arg0: bigint, arg1: string): Promise<void> {
+        if (this.processError) {
+            try { return await this.actor.updateComplaintStatus(arg0, arg1); } catch (e) { this.processError(e); throw new Error("unreachable"); }
+        } else { return await this.actor.updateComplaintStatus(arg0, arg1); }
+    }
+    async getGovPrices(): Promise<any[]> {
+        if (this.processError) {
+            try { return await this.actor.getGovPrices(); } catch (e) { this.processError(e); throw new Error("unreachable"); }
+        } else { return await this.actor.getGovPrices(); }
+    }
+    async setGovPrice(arg0: string, arg1: string, arg2: number, arg3: string, arg4: number): Promise<void> {
+        if (this.processError) {
+            try { return await this.actor.setGovPrice(arg0, arg1, arg2, arg3, arg4); } catch (e) { this.processError(e); throw new Error("unreachable"); }
+        } else { return await this.actor.setGovPrice(arg0, arg1, arg2, arg3, arg4); }
+    }
+    async setAllGovPrices(arg0: any[]): Promise<void> {
+        if (this.processError) {
+            try { return await this.actor.setAllGovPrices(arg0); } catch (e) { this.processError(e); throw new Error("unreachable"); }
+        } else { return await this.actor.setAllGovPrices(arg0); }
+    }
 }
 function from_candid_StripeSessionStatus_n11(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _StripeSessionStatus): StripeSessionStatus {
     return from_candid_variant_n12(_uploadFile, _downloadFile, value);

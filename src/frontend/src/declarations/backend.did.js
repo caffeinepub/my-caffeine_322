@@ -84,11 +84,36 @@ export const TransformationOutput = IDL.Record({
   'body' : IDL.Vec(IDL.Nat8),
   'headers' : IDL.Vec(http_header),
 });
+export const Feedback = IDL.Record({
+  'id' : IDL.Nat,
+  'principal' : IDL.Principal,
+  'name' : IDL.Text,
+  'rating' : IDL.Nat,
+  'text' : IDL.Text,
+  'timestamp' : IDL.Int,
+  'approved' : IDL.Bool,
+});
+export const Complaint = IDL.Record({
+  'id' : IDL.Nat,
+  'principal' : IDL.Principal,
+  'name' : IDL.Text,
+  'text' : IDL.Text,
+  'timestamp' : IDL.Int,
+  'status' : IDL.Text,
+});
+export const GovPriceEntry = IDL.Record({
+  'sector' : IDL.Text,
+  'item' : IDL.Text,
+  'price' : IDL.Float64,
+  'unit' : IDL.Text,
+  'qty' : IDL.Float64,
+});
 
 export const idlService = IDL.Service({
   '_initializeAccessControlWithSecret' : IDL.Func([IDL.Text], [], []),
   'accessCalculator' : IDL.Func([IDL.Text], [IDL.Bool], ['query']),
   'activateSubscription' : IDL.Func([IDL.Principal, IDL.Text], [IDL.Bool], []),
+  'approveFeedback' : IDL.Func([IDL.Nat], [], []),
   'assignCallerUserRole' : IDL.Func([IDL.Principal, UserRole], [], []),
   'calculateCropYield' : IDL.Func(
       [IDL.Float64, IDL.Text],
@@ -102,10 +127,15 @@ export const idlService = IDL.Service({
     ),
   'deactivateSubscription' : IDL.Func([IDL.Principal], [], []),
   'deleteCalcRecord' : IDL.Func([IDL.Nat], [], []),
+  'deleteFeedback' : IDL.Func([IDL.Nat], [], []),
+  'getAllFeedbacks' : IDL.Func([], [IDL.Vec(Feedback)], ['query']),
   'getAllSubscribers' : IDL.Func([], [IDL.Vec(Subscriber)], ['query']),
+  'getApprovedFeedbacks' : IDL.Func([], [IDL.Vec(Feedback)], ['query']),
   'getCalcHistory' : IDL.Func([], [IDL.Vec(CalcRecord)], ['query']),
   'getCallerUserProfile' : IDL.Func([], [IDL.Opt(UserProfile)], ['query']),
   'getCallerUserRole' : IDL.Func([], [UserRole], ['query']),
+  'getComplaints' : IDL.Func([], [IDL.Vec(Complaint)], ['query']),
+  'getGovPrices' : IDL.Func([], [IDL.Vec(GovPriceEntry)], ['query']),
   'getManualPayments' : IDL.Func([], [IDL.Vec(ManualPaymentRecord)], ['query']),
   'getStripeSessionStatus' : IDL.Func([IDL.Text], [StripeSessionStatus], []),
   'getUserProfile' : IDL.Func(
@@ -123,13 +153,18 @@ export const idlService = IDL.Service({
       [],
     ),
   'saveCallerUserProfile' : IDL.Func([UserProfile], [], []),
+  'setAllGovPrices' : IDL.Func([IDL.Vec(GovPriceEntry)], [], []),
+  'setGovPrice' : IDL.Func([IDL.Text, IDL.Text, IDL.Float64, IDL.Text, IDL.Float64], [], []),
   'setStripeConfiguration' : IDL.Func([StripeConfiguration], [], []),
+  'submitComplaint' : IDL.Func([IDL.Text, IDL.Text], [IDL.Nat], []),
+  'submitFeedback' : IDL.Func([IDL.Text, IDL.Nat, IDL.Text], [IDL.Nat], []),
   'submitManualPayment' : IDL.Func([IDL.Text, IDL.Text], [IDL.Bool], []),
   'transform' : IDL.Func(
       [TransformationInput],
       [TransformationOutput],
       ['query'],
     ),
+  'updateComplaintStatus' : IDL.Func([IDL.Nat, IDL.Text], [], []),
 });
 
 export const idlInitArgs = [];
@@ -205,6 +240,30 @@ export const idlFactory = ({ IDL }) => {
     'body' : IDL.Vec(IDL.Nat8),
     'headers' : IDL.Vec(http_header),
   });
+  const Feedback = IDL.Record({
+    'id' : IDL.Nat,
+    'principal' : IDL.Principal,
+    'name' : IDL.Text,
+    'rating' : IDL.Nat,
+    'text' : IDL.Text,
+    'timestamp' : IDL.Int,
+    'approved' : IDL.Bool,
+  });
+  const Complaint = IDL.Record({
+    'id' : IDL.Nat,
+    'principal' : IDL.Principal,
+    'name' : IDL.Text,
+    'text' : IDL.Text,
+    'timestamp' : IDL.Int,
+    'status' : IDL.Text,
+  });
+  const GovPriceEntry = IDL.Record({
+    'sector' : IDL.Text,
+    'item' : IDL.Text,
+    'price' : IDL.Float64,
+    'unit' : IDL.Text,
+    'qty' : IDL.Float64,
+  });
   
   return IDL.Service({
     '_initializeAccessControlWithSecret' : IDL.Func([IDL.Text], [], []),
@@ -214,6 +273,7 @@ export const idlFactory = ({ IDL }) => {
         [IDL.Bool],
         [],
       ),
+    'approveFeedback' : IDL.Func([IDL.Nat], [], []),
     'assignCallerUserRole' : IDL.Func([IDL.Principal, UserRole], [], []),
     'calculateCropYield' : IDL.Func(
         [IDL.Float64, IDL.Text],
@@ -227,10 +287,15 @@ export const idlFactory = ({ IDL }) => {
       ),
     'deactivateSubscription' : IDL.Func([IDL.Principal], [], []),
     'deleteCalcRecord' : IDL.Func([IDL.Nat], [], []),
+    'deleteFeedback' : IDL.Func([IDL.Nat], [], []),
+    'getAllFeedbacks' : IDL.Func([], [IDL.Vec(Feedback)], ['query']),
     'getAllSubscribers' : IDL.Func([], [IDL.Vec(Subscriber)], ['query']),
+    'getApprovedFeedbacks' : IDL.Func([], [IDL.Vec(Feedback)], ['query']),
     'getCalcHistory' : IDL.Func([], [IDL.Vec(CalcRecord)], ['query']),
     'getCallerUserProfile' : IDL.Func([], [IDL.Opt(UserProfile)], ['query']),
     'getCallerUserRole' : IDL.Func([], [UserRole], ['query']),
+    'getComplaints' : IDL.Func([], [IDL.Vec(Complaint)], ['query']),
+    'getGovPrices' : IDL.Func([], [IDL.Vec(GovPriceEntry)], ['query']),
     'getManualPayments' : IDL.Func(
         [],
         [IDL.Vec(ManualPaymentRecord)],
@@ -252,13 +317,18 @@ export const idlFactory = ({ IDL }) => {
         [],
       ),
     'saveCallerUserProfile' : IDL.Func([UserProfile], [], []),
+    'setAllGovPrices' : IDL.Func([IDL.Vec(GovPriceEntry)], [], []),
+    'setGovPrice' : IDL.Func([IDL.Text, IDL.Text, IDL.Float64, IDL.Text, IDL.Float64], [], []),
     'setStripeConfiguration' : IDL.Func([StripeConfiguration], [], []),
+    'submitComplaint' : IDL.Func([IDL.Text, IDL.Text], [IDL.Nat], []),
+    'submitFeedback' : IDL.Func([IDL.Text, IDL.Nat, IDL.Text], [IDL.Nat], []),
     'submitManualPayment' : IDL.Func([IDL.Text, IDL.Text], [IDL.Bool], []),
     'transform' : IDL.Func(
         [TransformationInput],
         [TransformationOutput],
         ['query'],
       ),
+    'updateComplaintStatus' : IDL.Func([IDL.Nat, IDL.Text], [], []),
   });
 };
 
