@@ -79,6 +79,23 @@ export interface UserProfile {
     name: string;
     language: string;
 }
+export interface Feedback {
+    id: bigint;
+    principal: Principal;
+    name: string;
+    rating: bigint;
+    text: string;
+    timestamp: bigint;
+    approved: boolean;
+}
+export interface Complaint {
+    id: bigint;
+    principal: Principal;
+    name: string;
+    text: string;
+    timestamp: bigint;
+    status: string;
+}
 export enum SubscriptionStatus {
     active = "active",
     inactive = "inactive"
@@ -91,15 +108,21 @@ export enum UserRole {
 export interface backendInterface {
     accessCalculator(_calculatorType: string): Promise<boolean>;
     activateSubscription(userPrincipal: Principal, paymentSessionId: string): Promise<boolean>;
+    approveFeedback(id: bigint): Promise<void>;
     assignCallerUserRole(user: Principal, role: UserRole): Promise<void>;
     calculateCropYield(area: number, _cropType: string): Promise<number>;
     createCheckoutSession(items: Array<ShoppingItem>, successUrl: string, cancelUrl: string): Promise<string>;
     deactivateSubscription(userPrincipal: Principal): Promise<void>;
     deleteCalcRecord(id: bigint): Promise<void>;
+    deleteFeedback(id: bigint): Promise<void>;
+    getAllFeedbacks(): Promise<Array<Feedback>>;
     getAllSubscribers(): Promise<Array<Subscriber>>;
+    getApprovedFeedbacks(): Promise<Array<Feedback>>;
     getCalcHistory(): Promise<Array<CalcRecord>>;
     getCallerUserProfile(): Promise<UserProfile | null>;
     getCallerUserRole(): Promise<UserRole>;
+    getComplaints(): Promise<Array<Complaint>>;
+    getGovPrices(): Promise<Array<GovPriceEntry>>;
     getManualPayments(): Promise<Array<ManualPaymentRecord>>;
     getStripeSessionStatus(sessionId: string): Promise<StripeSessionStatus>;
     getUserProfile(user: Principal): Promise<UserProfile | null>;
@@ -109,7 +132,19 @@ export interface backendInterface {
     isStripeConfigured(): Promise<boolean>;
     saveCalcRecord(sector: string, item: string, investment: number, sales: number, difference: number, resultType: string): Promise<bigint>;
     saveCallerUserProfile(profile: UserProfile): Promise<void>;
+    setAllGovPrices(entries: Array<GovPriceEntry>): Promise<void>;
+    setGovPrice(sector: string, item: string, price: number, unit: string, qty: number): Promise<void>;
     setStripeConfiguration(config: StripeConfiguration): Promise<void>;
+    submitComplaint(name: string, text: string): Promise<bigint>;
+    submitFeedback(name: string, rating: bigint, text: string): Promise<bigint>;
     submitManualPayment(transactionId: string, method: string): Promise<boolean>;
     transform(input: TransformationInput): Promise<TransformationOutput>;
+    updateComplaintStatus(id: bigint, status: string): Promise<void>;
+}
+export interface GovPriceEntry {
+    sector: string;
+    item: string;
+    price: number;
+    unit: string;
+    qty: number;
 }

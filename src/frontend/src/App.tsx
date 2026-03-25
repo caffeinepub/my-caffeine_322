@@ -1,4 +1,6 @@
 import { AdminPanel } from "@/components/AdminPanel";
+import { ComplaintBox } from "@/components/ComplaintBox";
+import { FeedbackSection } from "@/components/FeedbackSection";
 import { HistoryPage } from "@/components/HistoryPage";
 import { SubscriptionModal } from "@/components/SubscriptionModal";
 import { Badge } from "@/components/ui/badge";
@@ -21,6 +23,7 @@ import {
 } from "@/hooks/useQueries";
 import { useQueryClient } from "@tanstack/react-query";
 import {
+  AlertCircle,
   ArrowLeft,
   Calculator,
   CheckCircle2,
@@ -28,6 +31,7 @@ import {
   Download,
   LogIn,
   LogOut,
+  MessageSquare,
   Minus,
   QrCode,
   RotateCcw,
@@ -642,6 +646,7 @@ function HomePage({
 }) {
   const { canInstall, install } = useInstallPrompt();
   const [showQR, setShowQR] = useState(false);
+  const [showComplaint, setShowComplaint] = useState(false);
   const { data: isAdmin } = useIsAdmin();
 
   const containerVariants = {
@@ -738,6 +743,30 @@ function HomePage({
                   অ্যাডমিন
                 </button>
               )}
+              <button
+                type="button"
+                data-ocid="header.feedback_button"
+                onClick={() =>
+                  document
+                    .getElementById("feedback-section")
+                    ?.scrollIntoView({ behavior: "smooth" })
+                }
+                className="flex items-center gap-1.5 bg-green-50 border border-green-200 text-green-800 text-xs font-semibold px-3 py-2 rounded-xl hover:bg-green-100 transition-colors shrink-0"
+                title="মতামত"
+              >
+                <MessageSquare className="w-3.5 h-3.5" />
+                মতামত
+              </button>
+              <button
+                type="button"
+                data-ocid="header.complaint_button"
+                onClick={() => setShowComplaint(true)}
+                className="flex items-center gap-1.5 bg-red-50 border border-red-200 text-red-700 text-xs font-semibold px-3 py-2 rounded-xl hover:bg-red-100 transition-colors shrink-0"
+                title="অভিযোগ করুন"
+              >
+                <AlertCircle className="w-3.5 h-3.5" />
+                অভিযোগ
+              </button>
               <AuthHeaderButton />
             </div>
           </div>
@@ -790,11 +819,17 @@ function HomePage({
         </motion.div>
       </main>
 
+      <FeedbackSection />
+
       <footer className="text-center py-6 text-xs text-muted-foreground">
         © {new Date().getFullYear()} বাংলাদেশের কৃষি হিসাব
       </footer>
 
       <QRShareDialog open={showQR} onClose={() => setShowQR(false)} />
+      <ComplaintBox
+        open={showComplaint}
+        onClose={() => setShowComplaint(false)}
+      />
     </div>
   );
 }

@@ -346,4 +346,124 @@ actor {
   public query func getGovPrices() : async [GovPriceEntry] {
     govPrices.values().toArray();
   };
+
+  // ===== FEEDBACK / REVIEWS =====
+  public type Feedback = {
+    id : Nat;
+    principal : Principal;
+    name : Text;
+    rating : Nat;  // 1-5
+    text : Text;
+    timestamp : Int;
+    approved : Bool;
+  };
+
+  let feedbacks = Map.empty<Nat, Feedback>();
+  var nextFeedbackId = 1;
+
+  public shared ({ caller }) func submitFeedback(name : Text, rating : Nat, text : Text) : async Nat {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only logged-in users can submit feedback");
+    };
+    if (rating < 1 or rating > 5) {
+      Runtime.trap("Rating must be between 1 and 5");
+    };
+    if (text.size() < 2) {
+      Runtime.trap("Feedback text too short");
+    };
+    let fb : Feedback = {
+      id = nextFeedbackId;
+      principal = caller;
+      name;
+      rating;
+      text;
+      timestamp = Time.now();
+      approved = true;  // auto-approve
+    };
+    feedbacks.add(nextFeedbackId, fb);
+    nextFeedbackId += 1;
+    fb.id;
+  };
+
+  public query func getApprovedFeedbacks() : async [Feedback] {
+    feedbacks.values().toArray().filter(func(f) { f.approved }).reverse();
+  };
+
+  public shared ({ caller }) func approveFeedback(id : Nat) : async () {
+    if (not (AccessControl.isAdmin(accessControlState, caller))) {
+      Runtime.trap("Unauthorized: Only admins can approve feedback");
+    };
+    switch (feedbacks.get(id)) {
+      case (null) { Runtime.trap("Feedback not found") };
+      case (?fb) {
+        feedbacks.add(id, { fb with approved = true });
+      };
+    };
+  };
+
+  public shared ({ caller }) func deleteFeedback(id : Nat) : async () {
+    if (not (AccessControl.isAdmin(accessControlState, caller))) {
+      Runtime.trap("Unauthorized: Only admins can delete feedback");
+    };
+    feedbacks.remove(id);
+  };
+
+  public query ({ caller }) func getAllFeedbacks() : async [Feedback] {
+    if (not (AccessControl.isAdmin(accessControlState, caller))) {
+      Runtime.trap("Unauthorized: Only admins can view all feedbacks");
+    };
+    feedbacks.values().toArray().reverse();
+  };
+
+  // ===== COMPLAINTS =====
+  public type Complaint = {
+    id : Nat;
+    principal : Principal;
+    name : Text;
+    text : Text;
+    timestamp : Int;
+    status : Text;  // "pending", "reviewed", "resolved"
+  };
+
+  let complaints = Map.empty<Nat, Complaint>();
+  var nextComplaintId = 1;
+
+  public shared ({ caller }) func submitComplaint(name : Text, text : Text) : async Nat {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only logged-in users can submit complaints");
+    };
+    if (text.size() < 5) {
+      Runtime.trap("Complaint text too short");
+    };
+    let c : Complaint = {
+      id = nextComplaintId;
+      principal = caller;
+      name;
+      text;
+      timestamp = Time.now();
+      status = "pending";
+    };
+    complaints.add(nextComplaintId, c);
+    nextComplaintId += 1;
+    c.id;
+  };
+
+  public query ({ caller }) func getComplaints() : async [Complaint] {
+    if (not (AccessControl.isAdmin(accessControlState, caller))) {
+      Runtime.trap("Unauthorized: Only admins can view complaints");
+    };
+    complaints.values().toArray().reverse();
+  };
+
+  public shared ({ caller }) func updateComplaintStatus(id : Nat, status : Text) : async () {
+    if (not (AccessControl.isAdmin(accessControlState, caller))) {
+      Runtime.trap("Unauthorized: Only admins can update complaint status");
+    };
+    switch (complaints.get(id)) {
+      case (null) { Runtime.trap("Complaint not found") };
+      case (?c) {
+        complaints.add(id, { c with status = status });
+      };
+    };
+  };
 };
