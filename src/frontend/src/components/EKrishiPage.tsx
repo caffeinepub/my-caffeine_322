@@ -359,7 +359,7 @@ export function EKrishiPage({ onBack }: { onBack: () => void }) {
       </main>
 
       <footer className="text-center py-6 text-xs text-muted-foreground">
-        © {new Date().getFullYear()} বাংলাদেশের কৃষি হিসাব
+        © {new Date().getFullYear()} স্বনির্ভর কৃষি
       </footer>
     </div>
   );

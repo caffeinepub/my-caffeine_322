@@ -299,44 +299,114 @@ type CalcState = {
 };
 
 function InstallBanner() {
-  const { canInstall, install } = useInstallPrompt();
+  const { canInstall, install, installed } = useInstallPrompt();
   const [dismissed, setDismissed] = useState(false);
+  const [showManual, setShowManual] = useState(false);
+  const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
 
-  if (!canInstall || dismissed) return null;
+  if (dismissed || installed) return null;
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: -20 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -20 }}
-      className="bg-green-600 text-white px-4 py-3 flex items-center justify-between gap-3"
-    >
-      <div className="flex items-center gap-2 flex-1 min-w-0">
-        <Download className="w-4 h-4 shrink-0" />
-        <span className="text-sm font-medium">
-          অ্যাপটি মোবাইলে ইনস্টল করুন — ইন্টারনেট ছাড়াও চলবে
-        </span>
-      </div>
-      <div className="flex items-center gap-2 shrink-0">
-        <button
-          type="button"
-          data-ocid="install.primary_button"
-          onClick={install}
-          className="bg-white text-green-700 text-xs font-bold px-3 py-1.5 rounded-lg hover:bg-green-50 transition-colors"
-        >
-          ইনস্টল করুন
-        </button>
-        <button
-          type="button"
-          data-ocid="install.close_button"
-          onClick={() => setDismissed(true)}
-          className="text-white/80 hover:text-white transition-colors"
-          aria-label="বন্ধ করুন"
-        >
-          <X className="w-4 h-4" />
-        </button>
-      </div>
-    </motion.div>
+    <>
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -20 }}
+        className="bg-green-600 text-white px-4 py-3 flex items-center justify-between gap-3"
+      >
+        <div className="flex items-center gap-2 flex-1 min-w-0">
+          <Download className="w-4 h-4 shrink-0" />
+          <span className="text-sm font-medium">
+            অ্যাপটি মোবাইলে ইনস্টল করুন — ইন্টারনেট ছাড়াও চলবে
+          </span>
+        </div>
+        <div className="flex items-center gap-2 shrink-0">
+          {canInstall ? (
+            <button
+              type="button"
+              data-ocid="install.primary_button"
+              onClick={install}
+              className="bg-white text-green-700 text-xs font-bold px-3 py-1.5 rounded-lg hover:bg-green-50 transition-colors"
+            >
+              ইনস্টল করুন
+            </button>
+          ) : (
+            <button
+              type="button"
+              data-ocid="install.manual_button"
+              onClick={() => setShowManual(true)}
+              className="bg-white text-green-700 text-xs font-bold px-3 py-1.5 rounded-lg hover:bg-green-50 transition-colors"
+            >
+              কিভাবে ইনস্টল করবেন?
+            </button>
+          )}
+          <button
+            type="button"
+            data-ocid="install.close_button"
+            onClick={() => setDismissed(true)}
+            className="text-white/80 hover:text-white transition-colors"
+            aria-label="বন্ধ করুন"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      </motion.div>
+      {showManual && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-xl">
+            <h2 className="text-lg font-bold text-green-800 mb-4">
+              📲 ইনস্টল করার নিয়ম
+            </h2>
+            {isIOS ? (
+              <ol className="space-y-3 text-sm text-gray-700">
+                <li className="flex gap-2">
+                  <span className="font-bold text-green-700">১.</span> Safari
+                  browser-এ অ্যাপের লিংক খুলুন
+                </li>
+                <li className="flex gap-2">
+                  <span className="font-bold text-green-700">২.</span> নিচে
+                  Share বাটন (বর্গক্ষেত্র + তীর) ট্যাপ করুন
+                </li>
+                <li className="flex gap-2">
+                  <span className="font-bold text-green-700">৩.</span> "Add to
+                  Home Screen" সিলেক্ট করুন
+                </li>
+                <li className="flex gap-2">
+                  <span className="font-bold text-green-700">৪.</span> "Add" ট্যাপ
+                  করুন
+                </li>
+              </ol>
+            ) : (
+              <ol className="space-y-3 text-sm text-gray-700">
+                <li className="flex gap-2">
+                  <span className="font-bold text-green-700">১.</span> Chrome
+                  browser-এ অ্যাপের লিংক খুলুন
+                </li>
+                <li className="flex gap-2">
+                  <span className="font-bold text-green-700">২.</span> উপরের ডান
+                  কোণে তিন-ডট মেনু (⋮) ট্যাপ করুন
+                </li>
+                <li className="flex gap-2">
+                  <span className="font-bold text-green-700">৩.</span> "Add to
+                  Home screen" বা "হোম স্ক্রিনে যোগ করুন" সিলেক্ট করুন
+                </li>
+                <li className="flex gap-2">
+                  <span className="font-bold text-green-700">৪.</span> "Add" ট্যাপ
+                  করুন
+                </li>
+              </ol>
+            )}
+            <button
+              type="button"
+              onClick={() => setShowManual(false)}
+              className="mt-5 w-full bg-green-600 text-white font-bold py-2.5 rounded-xl hover:bg-green-700 transition-colors"
+            >
+              বন্ধ করুন
+            </button>
+          </div>
+        </div>
+      )}
+    </>
   );
 }
 
@@ -653,6 +723,8 @@ function HomePage({
 }) {
   const { canInstall, install } = useInstallPrompt();
   const [showQR, setShowQR] = useState(false);
+  const [showInstallHelp, setShowInstallHelp] = useState(false);
+  const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
   const [showComplaint, setShowComplaint] = useState(false);
   const { data: isAdmin } = useIsAdmin();
 
@@ -693,7 +765,7 @@ function HomePage({
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-3">
               <img
-                src="/assets/generated/agri-logo-transparent.dim_120x120.png"
+                src="/assets/generated/krishi-logo-new-transparent.dim_400x400.png"
                 alt="বাংলাদেশের কৃষি লোগো"
                 className="w-12 h-12 object-contain"
               />
@@ -707,17 +779,15 @@ function HomePage({
               </div>
             </div>
             <div className="flex items-center gap-2 flex-wrap justify-end">
-              {canInstall && (
-                <button
-                  type="button"
-                  data-ocid="header.install.primary_button"
-                  onClick={install}
-                  className="flex items-center gap-1.5 bg-green-600 text-white text-xs font-semibold px-3 py-2 rounded-xl hover:bg-green-700 transition-colors shrink-0"
-                >
-                  <Download className="w-3.5 h-3.5" />
-                  ইনস্টল
-                </button>
-              )}
+              <button
+                type="button"
+                data-ocid="header.install.primary_button"
+                onClick={canInstall ? install : () => setShowInstallHelp(true)}
+                className="flex items-center gap-1.5 bg-green-600 text-white text-xs font-semibold px-3 py-2 rounded-xl hover:bg-green-700 transition-colors shrink-0"
+              >
+                <Download className="w-3.5 h-3.5" />
+                ইনস্টল
+              </button>
               <button
                 type="button"
                 data-ocid="header.ekrishi_button"
@@ -876,10 +946,65 @@ function HomePage({
       <FeedbackSection />
 
       <footer className="text-center py-6 text-xs text-muted-foreground">
-        © {new Date().getFullYear()} বাংলাদেশের কৃষি হিসাব
+        © {new Date().getFullYear()} স্বনির্ভর কৃষি
       </footer>
 
       <QRShareDialog open={showQR} onClose={() => setShowQR(false)} />
+      {showInstallHelp && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-xl">
+            <h2 className="text-lg font-bold text-green-800 mb-4">
+              📲 ইনস্টল করার নিয়ম
+            </h2>
+            {isIOS ? (
+              <ol className="space-y-3 text-sm text-gray-700">
+                <li className="flex gap-2">
+                  <span className="font-bold text-green-700">১.</span> Safari
+                  browser-এ অ্যাপের লিংক খুলুন
+                </li>
+                <li className="flex gap-2">
+                  <span className="font-bold text-green-700">২.</span> নিচে
+                  Share বাটন (বর্গক্ষেত্র + তীর চিহ্ন) ট্যাপ করুন
+                </li>
+                <li className="flex gap-2">
+                  <span className="font-bold text-green-700">৩.</span> "Add to
+                  Home Screen" সিলেক্ট করুন
+                </li>
+                <li className="flex gap-2">
+                  <span className="font-bold text-green-700">৪.</span> উপরে
+                  "Add" ট্যাপ করুন
+                </li>
+              </ol>
+            ) : (
+              <ol className="space-y-3 text-sm text-gray-700">
+                <li className="flex gap-2">
+                  <span className="font-bold text-green-700">১.</span> Chrome
+                  browser-এ অ্যাপের লিংক খুলুন
+                </li>
+                <li className="flex gap-2">
+                  <span className="font-bold text-green-700">২.</span> উপরের ডান
+                  কোণে তিন-ডট মেনু (⋮) ট্যাপ করুন
+                </li>
+                <li className="flex gap-2">
+                  <span className="font-bold text-green-700">৩.</span> "Add to
+                  Home screen" বা "হোম স্ক্রিনে যোগ করুন" ট্যাপ করুন
+                </li>
+                <li className="flex gap-2">
+                  <span className="font-bold text-green-700">৪.</span> "Add" ট্যাপ
+                  করুন — হোম স্ক্রিনে "স্বনির্ভর কৃষি" আইকন যোগ হবে
+                </li>
+              </ol>
+            )}
+            <button
+              type="button"
+              onClick={() => setShowInstallHelp(false)}
+              className="mt-5 w-full bg-green-600 text-white font-bold py-2.5 rounded-xl hover:bg-green-700 transition-colors"
+            >
+              বন্ধ করুন
+            </button>
+          </div>
+        </div>
+      )}
       <ComplaintBox
         open={showComplaint}
         onClose={() => setShowComplaint(false)}
@@ -1016,7 +1141,7 @@ function SubSectorPage({
               <ArrowLeft className="w-5 h-5" />
             </button>
             <img
-              src="/assets/generated/agri-logo-transparent.dim_120x120.png"
+              src="/assets/generated/krishi-logo-new-transparent.dim_400x400.png"
               alt="লোগো"
               className="w-9 h-9 object-contain"
             />
