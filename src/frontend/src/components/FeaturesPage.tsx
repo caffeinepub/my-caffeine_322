@@ -23,6 +23,7 @@ const features = [
         text: "প্রতিটি ফসলের আলাদা হিসাব রাখা যায়, তুলনা করা যায় এবং কোন ফসল থেকে বেশি আয় হচ্ছে তা সহজে বোঝা যায়।",
       },
     ],
+    hotline: { name: "কৃষি তথ্য সার্ভিস (AIS)", number: "16123" },
   },
   {
     emoji: "🔬",
@@ -43,6 +44,7 @@ const features = [
         text: "রোগ নিশ্চিত না হলে স্থানীয় উপজেলা কৃষি অফিসে যোগাযোগ করুন অথবা ১৬১২৩ নম্বরে কল করুন।",
       },
     ],
+    hotline: { name: "কৃষি তথ্য সার্ভিস (AIS)", number: "16123" },
   },
   {
     emoji: "📔",
@@ -63,6 +65,7 @@ const features = [
         text: "এক মৌসুমের হিসাবের সাথে আগের মৌসুমের তুলনা করে উন্নতি বা অবনতির কারণ খুঁজে বের করুন।",
       },
     ],
+    hotline: { name: "কৃষি তথ্য সার্ভিস (AIS)", number: "16123" },
   },
   {
     emoji: "🌤️",
@@ -83,6 +86,7 @@ const features = [
         text: "দুর্যোগ ব্যবস্থাপনা অধিদপ্তর: ১০৯০। স্থানীয় কৃষি অফিস ও ইউনিয়ন পরিষদের সাথে যোগাযোগ রাখুন।",
       },
     ],
+    hotline: { name: "দুর্যোগ ব্যবস্থাপনা অধিদপ্তর", number: "1090" },
   },
   {
     emoji: "💹",
@@ -103,6 +107,7 @@ const features = [
         text: "ফসল সংরক্ষণ করে দাম বাড়ার অপেক্ষা করুন। সমিতি বা কো-অপারেটিভের মাধ্যমে একসাথে বিক্রি করুন।",
       },
     ],
+    hotline: { name: "কৃষি বিপণন অধিদপ্তর", number: "16123" },
   },
   {
     emoji: "🧪",
@@ -123,6 +128,7 @@ const features = [
         text: "প্রতি ৩ বছরে একবার মাটি পরীক্ষা করান। উপজেলা কৃষি অফিস থেকে মাটি পরীক্ষার সুবিধা পাওয়া যায়।",
       },
     ],
+    hotline: { name: "কৃষি তথ্য সার্ভিস (AIS)", number: "16123" },
   },
   {
     emoji: "🎙️",
@@ -143,6 +149,7 @@ const features = [
         text: "কৃষি তথ্য সার্ভিস: ১৬১২৩ নম্বরে ফোন করে সরাসরি কৃষি বিশেষজ্ঞের সাথে কথা বলুন।",
       },
     ],
+    hotline: { name: "কৃষি তথ্য সার্ভিস (AIS)", number: "16123" },
   },
   {
     emoji: "🤖",
@@ -163,6 +170,7 @@ const features = [
         text: "বাংলাদেশ কৃষি উন্নয়ন কর্পোরেশন (BADC) ও কৃষি সম্প্রসারণ অধিদপ্তর নিয়মিত প্রশিক্ষণ দেয়।",
       },
     ],
+    hotline: { name: "কৃষি সম্প্রসারণ অধিদপ্তর (DAE)", number: "16123" },
   },
   {
     emoji: "🤝",
@@ -183,6 +191,7 @@ const features = [
         text: "উপজেলা পর্যায়ে কৃষি বিপণন কর্মকর্তার সাথে যোগাযোগ রাখুন। তিনি বাজার সংযোগ ও নেটওয়ার্কিংয়ে সহায়তা করবেন।",
       },
     ],
+    hotline: { name: "কৃষি তথ্য সার্ভিস (AIS)", number: "16123" },
   },
   {
     emoji: "🎬",
@@ -203,6 +212,7 @@ const features = [
         text: "ইন্টারনেট না থাকলে আগে থেকে ভিডিও ডাউনলোড করে রাখুন অথবা স্থানীয় কৃষি অফিস থেকে DVD সংগ্রহ করুন।",
       },
     ],
+    hotline: { name: "কৃষি তথ্য সার্ভিস (AIS)", number: "16123" },
   },
   {
     emoji: "🏆",
@@ -223,6 +233,7 @@ const features = [
         text: "খেলার ছলে কৃষি জ্ঞান বাড়ে। নিয়মিত অ্যাপ ব্যবহারের অভ্যাস তৈরি হয়। পুরস্কারের প্রত্যাশায় কাজের উৎসাহ বাড়ে।",
       },
     ],
+    hotline: { name: "কৃষি তথ্য সার্ভিস (AIS)", number: "16123" },
   },
   {
     emoji: "🚨",
@@ -243,6 +254,7 @@ const features = [
         text: "স্থানীয় উপসহকারী কৃষি কর্মকর্তাকে জানান। তিনি সঠিক ব্যবস্থা নিতে সাহায্য করবেন। প্রতিবেশী কৃষকদেরও সতর্ক করুন।",
       },
     ],
+    hotline: { name: "দুর্যোগ ব্যবস্থাপনা অধিদপ্তর", number: "1090" },
   },
   {
     emoji: "🌿",
@@ -263,6 +275,7 @@ const features = [
         text: "জৈব পদ্ধতিতে চাষ করলে বাংলাদেশ কৃষি গবেষণা ইনস্টিটিউট থেকে সনদ নেওয়া যায়। জৈব পণ্যের দাম ৩০-৫০% বেশি পাওয়া যায়।",
       },
     ],
+    hotline: { name: "কৃষি সম্প্রসারণ অধিদপ্তর (DAE)", number: "16123" },
   },
   {
     emoji: "📦",
@@ -283,6 +296,7 @@ const features = [
         text: "সঠিক সময়ে কাটুন। দ্রুত বাজারজাত করুন। নষ্ট হওয়ার আগে প্রক্রিয়াজাত করুন (যেমন আচার, শুটকি)।",
       },
     ],
+    hotline: { name: "কৃষি বিপণন অধিদপ্তর", number: "16123" },
   },
   {
     emoji: "🌱",
@@ -303,6 +317,7 @@ const features = [
         text: "বপনের আগে বীজ ৪৮ ঘণ্টা পানিতে ভিজিয়ে রাখুন। তারপর ছায়ায় আধা-শুকনো করে বপন করুন। এতে অঙ্কুরোদগম দ্রুত হয়।",
       },
     ],
+    hotline: { name: "কৃষি সম্প্রসারণ অধিদপ্তর (DAE)", number: "16123" },
   },
   {
     emoji: "🍃",
@@ -323,6 +338,7 @@ const features = [
         text: "মাকড়সা, লেডিবার্ড বিটল ও পরজীবী ওয়াসপ ক্ষতিকর পোকা খায়। এদের সংরক্ষণে অপ্রয়োজনে কীটনাশক ব্যবহার থেকে বিরত থাকুন।",
       },
     ],
+    hotline: { name: "কৃষি তথ্য সার্ভিস (AIS)", number: "16123" },
   },
   {
     emoji: "💼",
@@ -343,6 +359,7 @@ const features = [
         text: "কৃষি মন্ত্রণালয়ের ভর্তুকি প্রকল্প। যুব উদ্যোক্তা ঋণ (১৮-৩৫ বছর)। SMEF-এর এসএমই লোন। উপজেলা কৃষি অফিসে তথ্য পাবেন।",
       },
     ],
+    hotline: { name: "বাংলাদেশ কৃষি ব্যাংক (BKB)", number: "16110" },
   },
   {
     emoji: "🔄",
@@ -363,6 +380,7 @@ const features = [
         text: "মৌসুমের সময় এলাকার কৃষকরা একে অপরকে সাহায্য করুন। 'বদলা খাটা' পদ্ধতিতে পারস্পরিক সহায়তা লাভজনক।",
       },
     ],
+    hotline: { name: "কৃষি সম্প্রসারণ অধিদপ্তর (DAE)", number: "16123" },
   },
   {
     emoji: "📅",
@@ -383,6 +401,7 @@ const features = [
         text: "সরিষা: আশ্বিন-কার্তিক বপন, পৌষ-মাঘ সংগ্রহ। আলু: কার্তিক বপন, মাঘ-ফাল্গুন সংগ্রহ। গম: কার্তিক-অগ্রহায়ণ বপন, ফাল্গুন-চৈত্র সংগ্রহ।",
       },
     ],
+    hotline: { name: "বাংলাদেশ ধান গবেষণা ইনস্টিটিউট (BRRI)", number: "16123" },
   },
   {
     emoji: "📊",
@@ -403,6 +422,7 @@ const features = [
         text: "টিএসপি ও জিপসাম: জমি তৈরির সময়। ইউরিয়ার ১ম কিস্তি: রোপণের ১০-১৫ দিন পর। ২য় কিস্তি: কুশি টিলারিং পর্যায়ে। ৩য় কিস্তি: থোড় বের হওয়ার আগে।",
       },
     ],
+    hotline: { name: "বাংলাদেশ কৃষি উন্নয়ন কর্পোরেশন (BADC)", number: "16123" },
   },
   {
     emoji: "🗓️",
@@ -423,6 +443,7 @@ const features = [
         text: "তরমুজ, খিরা, চিচিঙ্গা, ধুন্দুল, বরবটি। এই মৌসুমের সবজির বাজারমূল্য সাধারণত বেশি থাকে।",
       },
     ],
+    hotline: { name: "কৃষি সম্প্রসারণ অধিদপ্তর (DAE)", number: "16123" },
   },
   {
     emoji: "🚁",
@@ -443,6 +464,7 @@ const features = [
         text: "বেসামরিক বিমান চলাচল কর্তৃপক্ষ (CAAB) থেকে ড্রোন উড়ানোর অনুমতি নিতে হয়। ৫০০ ফুটের উপরে উড়ানো নিষেধ।",
       },
     ],
+    hotline: { name: "কৃষি সম্প্রসারণ অধিদপ্তর (DAE)", number: "16123" },
   },
   {
     emoji: "🏗️",
@@ -463,6 +485,7 @@ const features = [
         text: "ছাদ বাগানে মাসিক ৫-১০ হাজার টাকার সবজি উৎপাদন সম্ভব। নিজের পরিবারের চাহিদা মিটিয়ে বাকি বিক্রি করা যায়।",
       },
     ],
+    hotline: { name: "কৃষি তথ্য সার্ভিস (AIS)", number: "16123" },
   },
   {
     emoji: "🧠",
@@ -483,6 +506,7 @@ const features = [
         text: "বাংলাদেশ কৃষি গবেষণা ইনস্টিটিউট (BARI) এআই-ভিত্তিক কৃষি সমাধান নিয়ে কাজ করছে। ডিজিটাল কৃষি বাংলাদেশের ভবিষ্যৎ।",
       },
     ],
+    hotline: { name: "বাংলাদেশ কৃষি গবেষণা ইনস্টিটিউট (BARI)", number: "16123" },
   },
   {
     emoji: "⛓️",
@@ -503,6 +527,7 @@ const features = [
         text: "a2i (অ্যাকসেস টু ইনফরমেশন) প্রোগ্রাম ব্লকচেইন ভিত্তিক কৃষি সমাধান নিয়ে কাজ শুরু করেছে।",
       },
     ],
+    hotline: { name: "কৃষি বিপণন অধিদপ্তর", number: "16123" },
   },
   {
     emoji: "🛒",
@@ -523,6 +548,7 @@ const features = [
         text: "bKash বা Nagad দিয়ে নিরাপদ পেমেন্ট নিন। স্থানীয় কুরিয়ার সার্ভিস ব্যবহার করুন। প্রথমে আগাম পেমেন্ট নিন।",
       },
     ],
+    hotline: { name: "কৃষি বিপণন অধিদপ্তর", number: "16123" },
   },
   {
     emoji: "📞",
@@ -543,6 +569,7 @@ const features = [
         text: "প্রতিটি ইউনিয়নে একজন উপসহকারী কৃষি কর্মকর্তা আছেন। তিনি বিনামূল্যে পরামর্শ দেন। তার সাথে নিয়মিত যোগাযোগ রাখুন।",
       },
     ],
+    hotline: { name: "কৃষি তথ্য সার্ভিস (AIS)", number: "16123" },
   },
 ];
 
@@ -624,11 +651,17 @@ export function FeaturesPage({ onBack }: { onBack: () => void }) {
               <p className="text-xs text-gray-500 leading-relaxed line-clamp-3">
                 {feature.description}
               </p>
-              <div className="mt-auto pt-2 border-t border-green-50 flex items-center justify-between">
-                <span className="text-xs text-green-600 font-medium bg-green-50 px-2 py-1 rounded-full">
-                  #{idx + 1} সেবা
-                </span>
-                <ChevronRight className="w-4 h-4 text-green-400" />
+              <div className="mt-auto pt-2 border-t border-green-50 space-y-2">
+                <div className="flex items-center gap-1.5 text-xs text-green-700 bg-green-50 px-2 py-1 rounded-full w-fit font-medium">
+                  <span>📞</span>
+                  <span>{feature.hotline.number}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-green-600 font-medium bg-green-50 px-2 py-1 rounded-full">
+                    #{idx + 1} সেবা
+                  </span>
+                  <ChevronRight className="w-4 h-4 text-green-400" />
+                </div>
               </div>
             </motion.button>
           ))}
@@ -692,6 +725,30 @@ export function FeaturesPage({ onBack }: { onBack: () => void }) {
                   <p className="text-sm text-green-800 leading-relaxed">
                     {selectedFeature.description}
                   </p>
+                </div>
+
+                {/* Hotline Section */}
+                <div className="bg-green-50 border border-green-200 rounded-2xl p-4 flex items-center gap-4">
+                  <div className="w-10 h-10 rounded-full bg-green-600 flex items-center justify-center shrink-0 text-white text-lg">
+                    📞
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs text-green-600 font-medium">
+                      সরকারি হেল্পলাইন
+                    </p>
+                    <p className="text-sm font-bold text-green-800">
+                      {selectedFeature.hotline.name}
+                    </p>
+                    <p className="text-lg font-extrabold text-green-700">
+                      {selectedFeature.hotline.number}
+                    </p>
+                  </div>
+                  <a
+                    href={`tel:${selectedFeature.hotline.number}`}
+                    className="bg-green-600 hover:bg-green-700 text-white text-xs font-semibold px-3 py-2 rounded-xl transition-colors shrink-0"
+                  >
+                    কল করুন
+                  </a>
                 </div>
 
                 {/* Detail sections */}
